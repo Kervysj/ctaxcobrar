@@ -3,255 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AdriSweets Pro - Gestión</title>
+    <title>AdriSweets Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #05070a;
-            --card: #111827;
-            --cyan: #06b6d4;
-            --amber: #f59e0b;
-            --rose: #f43f5e;
-            --green: #10b981;
-            --text-main: #e2e8f0;
-            --text-dim: #94a3b8;
-        }
+        :root { --bg: #05070a; --card: #111827; --cyan: #06b6d4; --amber: #f59e0b; --rose: #f43f5e; --text: #e2e8f0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
+        
+        /* Cabecera Dinámica */
+        .header { padding: 25px; text-align: center; background: #0f172a; border-bottom: 1px solid #1f2937; position: relative; }
+        .btn-tasa { position: absolute; top: 20px; right: 20px; background: none; border: 1px solid var(--cyan); color: var(--cyan); border-radius: 8px; padding: 5px; font-size: 0.7rem; }
+        
+        .main-val { font-family: 'Orbitron'; font-size: 2.2rem; color: #fff; margin: 10px 0; }
+        .sub-val { color: #94a3b8; font-size: 1.1rem; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding-bottom: 90px;
-            overflow-x: hidden;
-        }
+        /* Botones de Acción Rápida (UX Mejorada) */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .action-card { background: var(--card); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #1f2937; transition: 0.2s; }
+        .action-card:active { transform: scale(0.95); background: #1e293b; }
+        .action-card i { display: block; font-size: 1.5rem; margin-bottom: 8px; }
 
-        /* Pantalla de Carga */
-        #loader {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: var(--bg); display: flex; justify-content: center;
-            align-items: center; z-index: 2000;
-        }
-
-        /* Dashboard de Capital */
-        .header {
-            padding: 35px 20px;
-            background: linear-gradient(180deg, #0f172a 0%, var(--bg) 100%);
-            text-align: center;
-            border-bottom: 1px solid #1f2937;
-        }
-
-        .tasa-tag {
-            font-family: 'Orbitron';
-            font-size: 0.7rem;
-            color: var(--cyan);
-            border: 1px solid var(--cyan);
-            padding: 4px 12px;
-            border-radius: 50px;
-            text-transform: uppercase;
-        }
-
-        .main-balance {
-            font-family: 'Orbitron';
-            font-size: 2.3rem;
-            margin: 15px 0 5px;
-            color: #fff;
-            letter-spacing: -1px;
-        }
-
-        .usd-alt { color: var(--text-dim); font-size: 1.1rem; font-weight: 300; }
-
-        /* Vistas y Navegación */
-        .view { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .view { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .view.active { display: block; }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Estilos de Formulario */
+        .modal-body { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid var(--cyan); }
+        input { width: 100%; padding: 15px; margin: 10px 0; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 12px; box-sizing: border-box; }
+        .btn-confirm { width: 100%; padding: 18px; background: var(--cyan); color: #000; border: none; border-radius: 12px; font-weight: 800; margin-top: 10px; }
 
-        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .kpi-card {
-            background: var(--card); padding: 15px; border-radius: 18px;
-            border-top: 3px solid #334155;
-        }
-        .kpi-card.red { border-color: var(--rose); }
-        .kpi-card.amber { border-color: var(--amber); }
-        .kpi-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
-        .kpi-val { font-size: 1.1rem; font-weight: 700; margin-top: 5px; font-family: 'Orbitron'; }
-
-        /* Estilo de Listas */
-        .item-row {
-            background: var(--card); padding: 16px; border-radius: 14px;
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.03);
-        }
-        .item-name { font-weight: 600; font-size: 0.95rem; }
-        .item-sub { font-size: 0.7rem; color: var(--text-dim); display: block; }
-        .item-price { font-family: 'Orbitron'; font-weight: bold; }
-
-        /* Barra de Navegación */
-        .nav-bar {
-            position: fixed; bottom: 0; width: 100%;
-            background: #0f172a; display: flex; justify-content: space-around;
-            padding: 12px 0; border-top: 1px solid #1f2937; z-index: 1000;
-        }
-        .nav-btn {
-            background: none; border: none; color: #64748b;
-            font-size: 0.6rem; font-weight: bold; text-transform: uppercase;
-        }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1f2937; }
+        .nav-btn { background: none; border: none; color: #64748b; font-size: 0.7rem; font-weight: bold; }
         .nav-btn.active { color: var(--cyan); }
-
-        /* Formulario Estilizado */
-        .form-box { background: var(--card); padding: 20px; border-radius: 20px; }
-        input, select {
-            width: 100%; padding: 14px; margin: 10px 0;
-            background: #1f2937; border: 1px solid #374151;
-            color: #fff; border-radius: 12px; box-sizing: border-box; font-size: 1rem;
-        }
-        .btn-main {
-            width: 100%; padding: 16px; background: var(--cyan);
-            color: #000; border: none; border-radius: 12px;
-            font-weight: 800; font-size: 1rem; margin-top: 10px;
-        }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="loader">CARGANDO DATOS...</div>
-
     <div class="header">
-        <span class="tasa-tag">BCV: <span id="tasa-val">0.00</span> Bs</span>
-        <div class="main-balance" id="disp-bs">0.00 Bs</div>
-        <div class="usd-alt" id="disp-usd">≈ 0.00 $</div>
+        <button class="btn-tasa" onclick="updateTasaManual()">⚙️ TASA BCV</button>
+        <div id="tasa-display" style="color:var(--cyan); font-family: 'Orbitron'; font-size: 0.8rem;">BCV: 0.00</div>
+        <div class="main-val" id="bal-bs">0.00 Bs</div>
+        <div class="sub-val" id="bal-usd">0.00 $</div>
     </div>
 
-    <div id="v-caja" class="view active">
-        <div class="kpi-grid">
-            <div class="kpi-card red">
-                <div class="kpi-label">Debes (Prov)</div>
-                <div class="kpi-val" id="val-deuda" style="color:var(--rose)">0 Bs</div>
-            </div>
-            <div class="kpi-card amber">
-                <div class="kpi-label">En Calle (Cli)</div>
-                <div class="kpi-val" id="val-calle" style="color:var(--amber)">0 Bs</div>
-            </div>
+    <div id="v-dash" class="view active">
+        <div class="action-grid">
+            <div class="action-card" onclick="openReg('Ingreso', 'VENTA DE DULCES')">💰 <br> Venta</div>
+            <div class="action-card" onclick="openReg('Abono_Prov', 'PAGO A PROVEEDOR')">🚚 <br> Pagar Prov</div>
+            <div class="action-card" onclick="openReg('Cobro_Cli', 'COBRO A CLIENTE')">🤝 <br> Cobrar Fiado</div>
+            <div class="action-card" onclick="openReg('Fiado_Cli', 'ENTREGA FIADO')">📝 <br> Dar Fiado</div>
         </div>
-        <h4 style="color: var(--text-dim); margin-bottom: 10px;">Últimos Movimientos</h4>
-        <div id="mini-movs"></div>
-    </div>
-
-    <div id="v-prov" class="view">
-        <h3 style="margin-top:0;">Lista de Proveedores</h3>
-        <div id="list-prov"></div>
-    </div>
-
-    <div id="v-cli" class="view">
-        <h3 style="margin-top:0;">Lista de Clientes</h3>
-        <div id="list-cli"></div>
+        <h4 style="margin-top:30px; color:#64748b;">Estado Actual</h4>
+        <div id="resumen-mini"></div>
     </div>
 
     <div id="v-reg" class="view">
-        <div class="form-box">
-            <h3 style="margin-top:0; color: var(--cyan);">Nuevo Registro</h3>
-            <select id="f-tipo">
-                <option value="Ingreso">Venta (Entra Efectivo/Transferencia)</option>
-                <option value="Abono_Prov">Pagar a Proveedor (Sale Bs)</option>
-                <option value="Deuda_Prov">Nueva Deuda (Suma a lo que debes)</option>
-                <option value="Cobro_Cli">Cobro a Cliente (Entra Bs de la calle)</option>
-                <option value="Fiado_Cli">Dar Fiado (Dinero a la calle)</option>
-                <option value="Egreso">Gasto del Negocio (Luz, Alquiler, etc)</option>
-            </select>
-            <input type="text" id="f-benef" placeholder="Nombre (Ej: Polar o Juan)">
-            <input type="number" id="f-monto" placeholder="Monto en Bolívares (Bs)">
-            <input type="text" id="f-ref" placeholder="Referencia / Pago Móvil">
-            <button class="btn-main" onclick="enviarOperacion()">GUARDAR EN SISTEMA</button>
+        <div class="modal-body">
+            <h3 id="reg-title" style="color:var(--cyan); margin-top:0;">Registro</h3>
+            <input type="text" id="f-benef" placeholder="¿A quién? (Nombre)">
+            <input type="number" id="f-monto" placeholder="Monto en Bolívares">
+            <input type="text" id="f-ref" placeholder="Ref / Pago Móvil">
+            <button class="btn-confirm" onclick="enviar()">CONFIRMAR Y GUARDAR</button>
+            <button onclick="nav('v-dash', null)" style="background:none; border:none; color:#64748b; width:100%; margin-top:15px;">Cancelar</button>
         </div>
     </div>
 
     <nav class="nav-bar">
-        <button class="nav-btn active" onclick="nav('v-caja', this)">Caja</button>
-        <button class="nav-btn" onclick="nav('v-prov', this)">Prov</button>
-        <button class="nav-btn" onclick="nav('v-cli', this)">Clientes</button>
-        <button class="nav-btn" onclick="nav('v-reg', this)">Registrar</button>
+        <button class="nav-btn active" onclick="nav('v-dash', this)">INICIO</button>
+        <button class="nav-btn" onclick="nav('v-prov', this)">PROVEEDORES</button>
+        <button class="nav-btn" onclick="nav('v-cli', this)">CLIENTES</button>
     </nav>
 
     <script>
-        const URL_API = "https://script.google.com/macros/s/AKfycbxrdIQZAhTjNWqnyyOr9JD7Q4FohkTeMWXorTdJ9I7RedWJlBCnQwYq--y56LzTVmE5/exec";
-        let tasaBCV = 1;
+        const API = "TU_URL_AQUÍ"; // REEMPLAZA CON TU URL
+        let tasa = 1, tipoActual = '', conceptoActual = '';
 
-        async function cargar() {
-            try {
-                const res = await fetch(URL_API);
-                const data = await res.json();
-                tasaBCV = data.tasa;
-                document.getElementById('tasa-val').innerText = tasaBCV.toFixed(2);
-                document.getElementById('loader').style.display = 'none';
-                renderizar(data);
-            } catch (e) { document.getElementById('loader').innerText = "ERROR DE CONEXIÓN"; }
+        async function init() {
+            const r = await fetch(API);
+            const d = await r.json();
+            tasa = d.tasa;
+            document.getElementById('tasa-display').innerText = `BCV: ${tasa.toFixed(2)}`;
+            render(d);
         }
 
-        function renderizar(data) {
-            let disp = 0, deu = 0, calle = 0;
-
-            // Historial rápido (últimos 5)
-            const movsDiv = document.getElementById('mini-movs');
-            movsDiv.innerHTML = data.movimientos.slice(-5).reverse().map(m => `
-                <div style="font-size:0.8rem; margin-bottom:8px; padding:5px; border-bottom:1px solid #1f2937">
-                    <span style="color:var(--cyan)">${m[1]}</span> | ${m[2]} | <b>${m[3]} Bs</b>
-                </div>
-            `).join('');
-
-            // Cálculo de Disponible
+        function render(data) {
+            let disp = 0;
             data.movimientos.slice(1).forEach(m => {
                 let mnt = parseFloat(m[3]) || 0;
                 if(m[1] === "Ingreso" || m[1] === "Cobro_Cli") disp += mnt;
-                else if(m[1] === "Abono_Prov" || m[1] === "Egreso") disp -= mnt;
+                else disp -= mnt;
             });
-
-            // Listas y totales
-            const drawList = (id, source, color, label) => {
-                let total = 0;
-                document.getElementById(id).innerHTML = source.slice(1).map(p => {
-                    let m = parseFloat(p[2]) || 0;
-                    total += m;
-                    return m === 0 ? '' : `
-                        <div class="item-row" style="border-left: 4px solid ${color}">
-                            <div><b class="item-name">${p[0]}</b><span class="item-sub">${label}</span></div>
-                            <div class="item-price" style="color:${color}">${m.toLocaleString()} Bs</div>
-                        </div>`;
-                }).join('');
-                return total;
-            };
-
-            deu = drawList('list-prov', data.proveedores, 'var(--rose)', 'Deuda Pendiente');
-            calle = drawList('list-cli', data.clientes, 'var(--amber)', 'Dinero en calle');
-
-            // Actualizar Cabecera
-            document.getElementById('disp-bs').innerText = disp.toLocaleString() + " Bs";
-            document.getElementById('disp-usd').innerText = "≈ " + (disp / tasaBCV).toFixed(2) + " $";
-            document.getElementById('val-deuda').innerText = deu.toLocaleString() + " Bs";
-            document.getElementById('val-calle').innerText = calle.toLocaleString() + " Bs";
+            document.getElementById('bal-bs').innerText = disp.toLocaleString() + " Bs";
+            document.getElementById('bal-usd').innerText = "≈ " + (disp / tasa).toFixed(2) + " $";
         }
 
-        function nav(viewId, btn) {
+        function openReg(tipo, concepto) {
+            tipoActual = tipo; conceptoActual = concepto;
+            document.getElementById('reg-title').innerText = concepto;
+            nav('v-reg', null);
+        }
+
+        function nav(id, btn) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            btn.classList.add('active');
+            document.getElementById(id).classList.add('active');
+            if(btn) {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
         }
 
-        async function enviarOperacion() {
-            const b = event.target; b.innerText = "ENVIANDO..."; b.disabled = true;
-            const body = {
-                tipo: document.getElementById('f-tipo').value,
+        async function updateTasaManual() {
+            let n = prompt("Ingrese nueva Tasa BCV:", tasa);
+            if(n) {
+                await fetch(API, {method:'POST', mode:'no-cors', body: JSON.stringify({accion:"UPDATE_TASA", nuevaTasa: parseFloat(n)})});
+                alert("Tasa Actualizada!");
+                location.reload();
+            }
+        }
+
+        async function enviar() {
+            const payload = {
+                tipo: tipoActual,
                 beneficiario: document.getElementById('f-benef').value,
                 montoBs: parseFloat(document.getElementById('f-monto').value),
-                tasa: tasaBCV,
-                referencia: document.getElementById('f-ref').value
+                tasa: tasa,
+                referencia: document.getElementById('f-ref').value,
+                concepto: conceptoActual
             };
-            await fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(body) });
+            await fetch(API, {method:'POST', mode:'no-cors', body: JSON.stringify(payload)});
             location.reload();
         }
 
-        window.onload = cargar;
+        window.onload = init;
     </script>
 </body>
 </html>
