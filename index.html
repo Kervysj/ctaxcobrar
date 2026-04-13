@@ -10,28 +10,43 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 90px; }
         
-        .header { padding: 30px 20px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; }
+        /* Alerta Flotante de Tasa */
+        .floating-tasa-alert {
+            background: rgba(244, 63, 94, 0.2);
+            border-bottom: 1px solid var(--rose);
+            color: var(--rose);
+            text-align: center;
+            padding: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            backdrop-filter: blur(8px);
+            display: none;
+        }
+
+        .header { padding: 20px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; }
         .tasa-pill { border: 1px solid var(--cyan); color: var(--cyan); padding: 5px 15px; border-radius: 50px; font-family: 'Orbitron'; font-size: 0.75rem; display: inline-block; margin-bottom: 15px; }
-        .main-balance { font-family: 'Orbitron'; font-size: 2.5rem; margin: 5px 0; }
+        .main-balance { font-family: 'Orbitron'; font-size: 2.3rem; margin: 5px 0; }
         .sub-balance { color: var(--cyan); font-size: 1rem; opacity: 0.8; }
 
-        /* KPI Row (Lo que debes y te deben) */
-        .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; margin-top: -20px; }
+        /* KPI Row */
+        .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; margin-top: -15px; }
         .kpi-card { background: var(--card); padding: 12px; border-radius: 15px; border: 1px solid #334155; text-align: center; }
 
-        /* Botonera Touch (La de tu imagen) */
+        /* Botonera Touch */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
         .btn-touch { background: var(--card); padding: 25px 15px; border-radius: 20px; border: 1px solid #1f2937; text-align: center; transition: 0.2s; }
         .btn-touch:active { transform: scale(0.95); background: #1e293b; }
-        .btn-touch i { display: block; font-size: 1.5rem; margin-bottom: 10px; }
 
         /* Vistas y Listas */
         .view { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .view.active { display: block; }
-        .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 5px solid transparent; }
+        .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 5px solid transparent; display: flex; align-items: center; justify-content: space-between; }
         
         /* Nav */
-        .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1f2937; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1f2937; z-index: 1000; }
         .nav-btn { background: none; border: none; color: #64748b; font-weight: bold; font-size: 0.7rem; }
         .nav-btn.active { color: var(--cyan); }
 
@@ -39,6 +54,10 @@
     </style>
 </head>
 <body>
+
+<div id="sticky-tasa" class="floating-tasa-alert">
+    ⚠️ REVISA LA TASA: <span id="val-tasa-alert">0.00</span> Bs/$
+</div>
 
 <div class="header">
     <div class="tasa-pill" onclick="setTasa()">BCV: <span id="tasa-val">0.00</span> ⚙️</div>
@@ -48,11 +67,11 @@
 
 <div class="kpi-row">
     <div class="kpi-card" style="border-bottom: 3px solid var(--rose)">
-        <small style="color:#94a3b8">DEBO</small><br>
+        <small style="color:#94a3b8">DEBO (Salida)</small><br>
         <b id="kpi-debo" style="color:var(--rose)">0 Bs</b>
     </div>
     <div class="kpi-card" style="border-bottom: 3px solid var(--amber)">
-        <small style="color:#94a3b8">ME DEBEN</small><br>
+        <small style="color:#94a3b8">EN CALLE (Me deben)</small><br>
         <b id="kpi-calle" style="color:var(--amber)">0 Bs</b>
     </div>
 </div>
@@ -67,14 +86,14 @@
 </div>
 
 <div id="v-hist" class="view">
-    <h3 style="color:var(--cyan)">HISTORIAL DETALLADO</h3>
+    <h3 style="color:var(--cyan); font-family: 'Orbitron'; font-size: 1rem;">HISTORIAL DE MOVIMIENTOS</h3>
     <div id="lista-historial"></div>
 </div>
 
 <div id="v-abonos" class="view">
-    <h3>SELECCIONA CUENTA</h3>
+    <h3 style="font-family: 'Orbitron'; font-size: 1rem;">SELECCIONA CUENTA PENDIENTE</h3>
     <div id="lista-para-abonar"></div>
-    <button onclick="nav('v-dash')" style="width:100%; padding:15px; background:none; border:none; color:#64748b;">Volver</button>
+    <button onclick="nav('v-dash')" style="width:100%; padding:15px; background:none; border:none; color:#64748b; font-weight: bold;">Volver</button>
 </div>
 
 <nav class="nav">
@@ -89,7 +108,17 @@
     async function init() {
         const r = await fetch(SCRIPT_URL);
         db = await r.json();
+        
+        // Alerta flotante y de inicio
+        document.getElementById('val-tasa-alert').innerText = db.tasa;
+        document.getElementById('sticky-tasa').style.display = 'block';
+
         render();
+
+        setTimeout(() => {
+            let conf = confirm(`REVISIÓN DE TASA\n\nLa tasa actual es: ${db.tasa} Bs/$\n¿Es la correcta para hoy?`);
+            if (!conf) setTasa();
+        }, 500);
     }
 
     function render() {
@@ -100,36 +129,43 @@
 
         db.movimientos.slice(1).reverse().forEach(m => {
             let mnt = parseFloat(m[3]) || 0;
-            // Solo lo que es Venta o Cobro suma al banco real
             if(m[1] === "Venta" || m[1] === "Abono_Cobrado") saldo += mnt;
             if(m[1] === "Abono_Pagado" || m[1] === "Gasto") saldo -= mnt;
 
             histHtml += `
             <div class="list-item" style="border-left-color: ${m[1] === 'Venta' ? 'var(--green)' : 'var(--cyan)'}">
-                <b>${m[2]}</b> <span style="float:right">${mnt} Bs</span>
-                <div style="font-size:0.7rem; color:#64748b; margin-top:5px;">${m[1]} | ${m[5]}</div>
+                <div style="flex:1">
+                    <b style="text-transform: capitalize;">${m[2]}</b>
+                    <div style="font-size:0.7rem; color:#64748b; margin-top:5px;">${m[1]} | ${m[5]}</div>
+                </div>
+                <div style="text-align:right">
+                    <b>${mnt.toLocaleString()} Bs</b>
+                    <div style="font-size:0.6rem; color:#475569">${new Date(m[0]).toLocaleDateString()}</div>
+                </div>
             </div>`;
         });
 
         db.entidades.slice(1).forEach(e => {
             let s = parseFloat(e[2]);
-            if(e[1] === "Proveedor") debo += s;
-            else calle += s;
+            if(s > 0) {
+                if(e[1] === "Proveedor") debo += s;
+                else calle += s;
+            }
         });
 
         document.getElementById('bs-total').innerText = saldo.toLocaleString() + " Bs";
         document.getElementById('usd-total').innerText = "≈ " + (saldo / db.tasa).toFixed(2) + " $";
         document.getElementById('kpi-debo').innerText = debo.toLocaleString() + " Bs";
         document.getElementById('kpi-calle').innerText = calle.toLocaleString() + " Bs";
-        document.getElementById('lista-historial').innerHTML = histHtml;
+        document.getElementById('lista-historial').innerHTML = histHtml || "Sin movimientos";
     }
 
     function registrarRapido(tipo) {
-        let persona = prompt("¿Nombre de la persona o proveedor?");
+        let persona = prompt(`Nombre del ${tipo === 'Deuda' ? 'Proveedor' : 'Cliente'}:`);
         if(!persona) return;
         let monto = prompt("Monto en Bolívares:");
         if(!monto) return;
-        let ref = prompt("Descripción corta (Ej: Torta Arequipe):");
+        let ref = prompt("¿Qué compró/vendió? (Ej: Torta Arequipe):");
         
         enviarData({ accion: "REGISTRAR", tipo, persona, monto: parseFloat(monto), tasa: db.tasa, ref, estatus: "Pendiente" });
     }
@@ -137,12 +173,24 @@
     function irAAbonos() {
         let html = "";
         db.entidades.slice(1).forEach(e => {
-            let s = parseFloat(e[2]);
-            if(s > 0) {
+            let sBs = parseFloat(e[2]);
+            if(sBs > 0) {
+                let primerReg = db.movimientos.find(m => m[2] === e[0] && (m[1] === 'Deuda' || m[1] === 'Fiado'));
+                let fechaI = primerReg ? new Date(primerReg[0]).toLocaleDateString() : "S/F";
+                let tasaO = primerReg ? parseFloat(primerReg[4]) : db.tasa;
+                let mUSD = (sBs / tasaO).toFixed(2);
+
                 html += `
-                <div class="list-item" style="border-left-color:var(--cyan)" onclick="ejecutarAbono('${e[0]}', ${s}, '${e[1]}')">
-                    <b>${e[0]}</b> <span style="float:right">${s} Bs</span>
-                    <div style="font-size:0.7rem; color:#94a3b8">Toca para pagar/cobrar saldo</div>
+                <div class="list-item" style="border-left-color:var(--cyan)" onclick="ejecutarAbono('${e[0]}', ${sBs}, '${e[1]}')">
+                    <div style="flex: 1;">
+                        <b style="text-transform: capitalize;">${e[0]}</b>
+                        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">🗓️ Desde: ${fechaI}</div>
+                        <div style="font-size: 0.65rem; color: var(--cyan);">Tasa origen: ${tasaO}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: bold;">${sBs.toLocaleString()} Bs</div>
+                        <div style="font-size: 0.8rem; color: var(--amber); font-family: 'Orbitron';">$ ${mUSD}</div>
+                    </div>
                 </div>`;
             }
         });
@@ -150,11 +198,16 @@
         nav('v-abonos');
     }
 
-    function ejecutarAbono(nombre, saldo, tipoEnt) {
-        let mnt = prompt(`Saldo de ${nombre}: ${saldo} Bs. ¿Cuánto vas a abonar?`, saldo);
+    function ejecutarAbono(nombre, saldoBs, tipoEnt) {
+        let reg = db.movimientos.find(m => m[2] === nombre && (m[1] === 'Deuda' || m[1] === 'Fiado'));
+        let tasaO = reg ? parseFloat(reg[4]) : db.tasa;
+        let saldoUSD = (saldoBs / tasaO).toFixed(2);
+
+        let mnt = prompt(`Cuenta de ${nombre}\nSaldo: ${saldoBs} Bs ($ ${saldoUSD})\n\n¿Cuánto vas a abonar en Bs?`, saldoBs);
         if(!mnt) return;
+        
         let t = (tipoEnt === "Proveedor") ? "Abono_Pagado" : "Abono_Cobrado";
-        enviarData({ accion: "REGISTRAR", tipo: t, persona: nombre, monto: parseFloat(mnt), tasa: db.tasa, ref: "Abono de cuenta", estatus: "Pagado" });
+        enviarData({ accion: "REGISTRAR", tipo: t, persona: nombre, monto: parseFloat(mnt), tasa: db.tasa, ref: `Abono (Origen: $${saldoUSD})`, estatus: "Pagado" });
     }
 
     async function enviarData(p) {
