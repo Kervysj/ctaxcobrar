@@ -23,7 +23,8 @@
         .kpi-card { background: var(--card); padding: 12px; border-radius: 15px; border: 1px solid #334155; text-align: center; }
 
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
-        .btn-touch { background: var(--card); padding: 25px 15px; border-radius: 20px; border: 1px solid #1f2937; text-align: center; }
+        .btn-touch { background: var(--card); padding: 25px 15px; border-radius: 20px; border: 1px solid #1f2937; text-align: center; transition: 0.2s; }
+        .btn-touch:active { transform: scale(0.95); background: #1e293b; }
 
         .view { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .view.active { display: block; }
@@ -31,7 +32,7 @@
         .section-title { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--cyan); margin: 20px 0 10px 5px; text-transform: uppercase; letter-spacing: 1px; }
 
         .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 5px solid transparent; display: flex; align-items: center; justify-content: space-between; }
-        .status-icon { font-size: 1.2rem; margin-right: 10px; }
+        .status-icon { font-size: 1.2rem; margin-right: 12px; }
 
         .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1f2937; z-index: 1000; }
         .nav-btn { background: none; border: none; color: #64748b; font-weight: bold; font-size: 0.7rem; }
@@ -68,18 +69,18 @@
 </div>
 
 <div id="v-hist" class="view">
-    <div class="section-title">Historial de Movimientos</div>
+    <div class="section-title">Historial General</div>
     <div id="lista-historial"></div>
 </div>
 
 <div id="v-abonos" class="view">
-    <div class="section-title">¿A quién vas a cobrar/pagar?</div>
+    <div class="section-title">Selecciona para abonar</div>
     <div id="lista-para-abonar"></div>
-    <button onclick="nav('v-dash')" style="width:100%; padding:15px; color:#64748b; background:none; border:none;">Volver</button>
+    <button onclick="nav('v-dash')" style="width:100%; padding:15px; color:#64748b; background:none; border:none; font-weight:bold;">Volver al Inicio</button>
 </div>
 
 <nav class="nav">
-    <button class="nav-btn active" onclick="nav('v-dash', this)">INICIO</button>
+    <button class="nav-btn active" id="btn-nav-inicio" onclick="nav('v-dash', this)">INICIO</button>
     <button class="nav-btn" onclick="nav('v-hist', this)">HISTORIAL</button>
 </nav>
 
@@ -88,62 +89,70 @@
     let db = {};
 
     async function init() {
-        const r = await fetch(SCRIPT_URL);
-        db = await r.json();
-        document.getElementById('val-tasa-alert').innerText = db.tasa;
-        render();
-        setTimeout(() => {
-            if(!confirm(`Tasa actual: ${db.tasa} Bs/$\n¿Correcta para hoy?`)) setTasa();
-        }, 500);
+        try {
+            const r = await fetch(SCRIPT_URL);
+            db = await r.json();
+            document.getElementById('val-tasa-alert').innerText = db.tasa;
+            render();
+            setTimeout(() => {
+                if(!confirm(`Tasa actual: ${db.tasa} Bs/$\n¿Es correcta para hoy?`)) setTasa();
+            }, 600);
+        } catch (e) {
+            alert("Error cargando datos. Revisa la conexión.");
+        }
     }
 
     function render() {
         document.getElementById('tasa-val').innerText = db.tasa;
         let saldoBancario = parseFloat(db.saldoInicial);
         let debo = 0, calle = 0;
-        let histHtml = "", pendDashHtml = "", abonarHtml = "";
+        let histHtml = "", pendHtml = "";
 
-        // Render Historial con Filtro visual
+        // 1. Procesar Historial (y calcular saldo real)
         db.movimientos.slice(1).reverse().forEach(m => {
             let mnt = parseFloat(m[3]) || 0;
-            if(m[1] === "Venta" || m[1] === "Abono_Cobrado") saldoBancario += mnt;
-            if(m[1] === "Abono_Pagado" || m[1] === "Gasto") saldoBancario -= mnt;
+            let tipo = m[1];
+            if(tipo === "Venta" || tipo === "Abono_Cobrado") saldoBancario += mnt;
+            if(tipo === "Abono_Pagado" || tipo === "Gasto") saldoBancario -= mnt;
 
-            let esPago = m[1].includes("Abono");
+            let esPago = tipo.includes("Abono");
             histHtml += `
-            <div class="list-item" style="border-left-color: ${esPago ? var(--green) : var(--cyan)}">
-                <span class="status-icon">${esPago ? '✅' : '⏳'}</span>
-                <div style="flex:1">
-                    <b style="text-transform: capitalize;">${m[2]}</b>
-                    <div style="font-size:0.7rem; color:#64748b;">${m[1]} | ${m[5]}</div>
+            <div class="list-item" style="border-left-color: ${esPago ? 'var(--green)' : 'var(--cyan)'}">
+                <div style="display:flex; align-items:center;">
+                    <span class="status-icon">${esPago ? '✅' : '⏳'}</span>
+                    <div>
+                        <b style="text-transform: capitalize;">${m[2]}</b>
+                        <div style="font-size:0.7rem; color:#64748b;">${tipo} | ${m[5] || ''}</div>
+                    </div>
                 </div>
                 <div style="text-align:right">
                     <b>${mnt.toLocaleString()} Bs</b>
+                    <div style="font-size:0.6rem; color:#475569">${new Date(m[0]).toLocaleDateString()}</div>
                 </div>
             </div>`;
         });
 
-        // Render Entidades y Pendientes
+        // 2. Procesar Deudas Activas
         db.entidades.slice(1).forEach(e => {
             let sBs = parseFloat(e[2]);
-            if(sBs > 0.01) { // Filtro para ignorar basura de decimales
+            if(sBs > 0.1) { // Ignorar saldos basura
                 if(e[1] === "Proveedor") debo += sBs; else calle += sBs;
 
                 let reg = db.movimientos.find(m => m[2] === e[0] && (m[1] === 'Deuda' || m[1] === 'Fiado'));
                 let tO = reg ? parseFloat(reg[4]) : db.tasa;
                 let mUSD = (sBs / tO).toFixed(2);
 
-                let cardHtml = `
+                pendHtml += `
                 <div class="list-item" style="border-left-color:var(--amber)" onclick="ejecutarAbono('${e[0]}', ${sBs}, '${e[1]}')">
                     <div style="flex:1">
-                        <b>${e[0]}</b><br><small style="color:#64748b">Fio: ${reg ? new Date(reg[0]).toLocaleDateString() : 'S/F'}</small>
+                        <b>${e[0]}</b><br>
+                        <small style="color:#64748b">🗓️ ${reg ? new Date(reg[0]).toLocaleDateString() : 'S/F'}</small>
                     </div>
                     <div style="text-align:right">
-                        <b>${sBs.toLocaleString()} Bs</b><br><small style="color:var(--amber)">$ ${mUSD}</small>
+                        <b>${sBs.toLocaleString()} Bs</b><br>
+                        <small style="color:var(--amber); font-family:'Orbitron'">$ ${mUSD}</small>
                     </div>
                 </div>`;
-                pendDashHtml += cardHtml;
-                abonarHtml += cardHtml;
             }
         });
 
@@ -151,9 +160,10 @@
         document.getElementById('usd-total').innerText = "≈ " + (saldoBancario / db.tasa).toFixed(2) + " $";
         document.getElementById('kpi-debo').innerText = debo.toLocaleString() + " Bs";
         document.getElementById('kpi-calle').innerText = calle.toLocaleString() + " Bs";
-        document.getElementById('lista-historial').innerHTML = histHtml;
-        document.getElementById('lista-pendientes-dash').innerHTML = pendDashHtml || "✅ ¡Todo cobrado!";
-        document.getElementById('lista-para-abonar').innerHTML = abonarHtml || "Sin cuentas";
+        
+        document.getElementById('lista-historial').innerHTML = histHtml || "Sin movimientos registrados";
+        document.getElementById('lista-pendientes-dash').innerHTML = pendHtml || "<div style='padding:20px; color:#64748b; text-align:center;'>✅ No hay deudas pendientes</div>";
+        document.getElementById('lista-para-abonar').innerHTML = pendHtml || "<div style='padding:20px; color:#64748b; text-align:center;'>No hay cuentas para cobrar</div>";
     }
 
     function ejecutarAbono(nombre, saldoBs, tipoEnt) {
@@ -162,11 +172,11 @@
         let dUSD = (saldoBs / tO).toFixed(2);
         let sugerido = (dUSD * db.tasa).toFixed(2);
 
-        let mnt = prompt(`PAGAR/COBRAR: ${nombre}\nFijo en $: ${dUSD}\nSugerido hoy: ${sugerido} Bs\n\n¿Monto a registrar?`, sugerido);
+        let mnt = prompt(`COBRAR A: ${nombre}\nValor en $: ${dUSD}\nSugerido hoy: ${sugerido} Bs\n\n¿Cuánto recibes en Bs?`, sugerido);
         if(!mnt) return;
 
-        // Si paga lo sugerido, mandamos comando para limpiar decimales
-        let forzarCero = (parseFloat(mnt) >= parseFloat(sugerido) - 1); 
+        // Si paga el monto sugerido o más, mandamos señal para limpiar saldo en Excel
+        let limpiar = (parseFloat(mnt) >= (parseFloat(sugerido) - 0.5));
 
         enviarData({ 
             accion: "REGISTRAR", 
@@ -174,25 +184,26 @@
             persona: nombre, 
             monto: parseFloat(mnt), 
             tasa: db.tasa, 
-            ref: `Liquidación $${dUSD}`,
-            limpiar: forzarCero // Nueva bandera para el Excel
+            ref: `Liquidación deuda de $${dUSD}`,
+            limpiar: limpiar 
         });
     }
 
     function registrarRapido(tipo) {
         let p = prompt("Nombre:"); if(!p) return;
-        let m = prompt("Monto Bs:"); if(!m) return;
-        let r = prompt("Ref:");
+        let m = prompt("Monto en Bolívares:"); if(!m) return;
+        let r = prompt("Referencia (Ej: Torta):");
         enviarData({ accion: "REGISTRAR", tipo, persona: p, monto: parseFloat(m), tasa: db.tasa, ref: r });
     }
 
     async function enviarData(p) {
+        document.body.style.opacity = "0.5";
         await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(p)});
         location.reload();
     }
 
     async function setTasa() {
-        let n = prompt("Nueva Tasa:", db.tasa);
+        let n = prompt("Nueva Tasa BCV:", db.tasa);
         if(n) {
             await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({accion:"CAMBIAR_TASA", valor: parseFloat(n)})});
             location.reload();
