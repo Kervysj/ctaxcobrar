@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AdriSweets Pro - Historial Detallado</title>
+    <title>AdriSweets Pro - Detalle Fijo</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #05070a; --card: #111827; --cyan: #22d3ee; --rose: #f43f5e; --amber: #fbbf24; --green: #10b981; --gray: #475569; --purple: #a855f7; }
@@ -11,20 +11,14 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 90px; overflow-x: hidden; }
         .header { padding: 30px 20px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; }
         .tasa-container { display: inline-flex; align-items: center; gap: 10px; background: rgba(31,41,55,0.5); padding: 8px 18px; border-radius: 50px; border: 1px solid #374151; font-family: 'Orbitron'; font-size: 0.8rem; margin-bottom: 15px; cursor: pointer; }
-        .bulb { font-size: 1.2rem; filter: grayscale(1); transition: 0.3s; }
-        .bulb.active { filter: grayscale(0); animation: glow 1.5s infinite alternate; }
-        @keyframes glow { from { text-shadow: 0 0 2px var(--amber); opacity: 1; } to { text-shadow: 0 0 15px var(--amber); opacity: 0.6; } }
-        .toast-alert { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(250%); background: var(--card); border: 2px solid var(--amber); padding: 25px; width: 92%; border-radius: 25px; z-index: 10000; transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 60px rgba(0,0,0,0.9); }
-        .toast-alert.show { transform: translateX(-50%) translateY(0); }
         .main-balance { font-family: 'Orbitron'; font-size: 2.3rem; margin: 5px 0; }
         .usd-val { color: var(--cyan); font-weight: bold; font-size: 1.1rem; opacity: 0.9; }
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
         .btn-touch { background: var(--card); padding: 20px 10px; border-radius: 18px; border: 1px solid #1f2937; text-align: center; border-bottom: 4px solid transparent; cursor: pointer; }
-        .btn-full { grid-column: span 2; }
         .list-item { background: var(--card); padding: 16px; border-radius: 18px; margin-bottom: 12px; border-left: 6px solid transparent; display: flex; justify-content: space-between; align-items: center; }
-        .badge { font-size: 0.65rem; padding: 3px 10px; border-radius: 6px; font-weight: bold; text-transform: uppercase; margin-top: 5px; display: inline-block; }
         .detail-text { font-size: 0.7rem; color: var(--gray); margin-top: 4px; display: block; }
-        .desc-highlight { font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.05); padding: 5px 8px; border-radius: 8px; margin-top: 6px; display: inline-block; border-left: 2px solid var(--cyan); }
+        /* ESTA ES LA CAJA QUE RESALTA EL DETALLE */
+        .desc-box { background: rgba(34, 211, 238, 0.1); color: #fff; padding: 6px 10px; border-radius: 8px; margin-top: 8px; font-size: 0.8rem; border-left: 3px solid var(--cyan); display: block; font-style: italic; }
         .view { display: none; padding: 20px; }
         .view.active { display: block; }
         .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1f2937; }
@@ -34,18 +28,8 @@
 </head>
 <body>
 
-<div id="toast" class="toast-alert">
-    <div style="text-align:center; font-family:'Orbitron'; font-size: 0.8rem; color: var(--amber); margin-bottom:12px;">⚠️ CONFIRMACIÓN DE TASA</div>
-    <div style="text-align:center; font-size: 1.1rem; margin-bottom:20px;">¿La tasa BCV actual es <b><span id="tasa-toast">---</span></b>?</div>
-    <div style="display:flex; gap:12px;">
-        <button onclick="closeToast(true)" style="flex:1; background:var(--green); border:none; padding:15px; border-radius:15px; font-weight:bold; color:#000;">SÍ</button>
-        <button onclick="closeToast(false)" style="flex:1; background:var(--rose); border:none; padding:15px; border-radius:15px; font-weight:bold; color:#fff;">NO, CAMBIAR</button>
-    </div>
-</div>
-
 <div class="header">
     <div class="tasa-container" onclick="setTasa()">
-        <span id="bulb-icon" class="bulb active">💡</span>
         <span>BCV: <span id="tasa-val">0.00</span></span>
     </div>
     <div id="bs-total" class="main-balance">0.00 Bs</div>
@@ -58,14 +42,8 @@
         <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarSeguro('Gasto')">📤<br><small style="color:var(--rose); font-weight:bold;">Salida / Gasto</small></div>
         <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarSeguro('Deuda')">📦<br><small>Yo Debo</small></div>
         <div class="btn-touch" style="border-bottom-color:var(--amber)" onclick="registrarSeguro('Fiado')">👤<br><small>Fiar Dulce</small></div>
-        <div class="btn-touch btn-full" style="border-bottom-color:var(--cyan)" onclick="nav('v-abonos')">💸<br><small>Pagar o Cobrar Cuentas</small></div>
     </div>
     <div id="lista-pendientes-dash"></div>
-</div>
-
-<div id="v-abonos" class="view">
-    <div id="lista-para-abonar"></div>
-    <button onclick="nav('v-dash')" style="width:100%; color:var(--gray); background:none; border:none; padding:20px; font-family:'Orbitron';">← VOLVER</button>
 </div>
 
 <div id="v-hist" class="view">
@@ -86,36 +64,28 @@
             const r = await fetch(SCRIPT_URL);
             db = await r.json();
             document.getElementById('tasa-val').innerText = db.tasa;
-            document.getElementById('tasa-toast').innerText = db.tasa;
-            document.getElementById('bulb-icon').classList.add('active');
-            setTimeout(() => { document.getElementById('toast').classList.add('show'); }, 600);
             render();
-        } catch(e) { alert("Error cargando datos"); }
+        } catch(e) { alert("Error al cargar"); }
     }
 
     function formato12h(fechaStr) {
         if(!fechaStr || fechaStr === "Sin fecha") return "Sin fecha";
         try {
             const d = new Date(fechaStr);
-            if(isNaN(d.getTime())) return fechaStr;
-            return d.toLocaleString('es-VE', { 
-                day: '2-digit', month: '2-digit', year: 'numeric', 
-                hour: '2-digit', minute: '2-digit', hour12: true 
-            }).toUpperCase();
+            return d.toLocaleString('es-VE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true }).toUpperCase();
         } catch(e) { return fechaStr; }
     }
 
     function render() {
         let saldoBancario = parseFloat(db.saldoInicial) || 0;
-        let pendHtml = "", histHtml = "";
+        let histHtml = "";
 
         db.movimientos.slice(1).reverse().forEach(m => {
             let mnt = parseFloat(m[3]) || 0;
             let tipo = m[1];
             let esGasto = ["Gasto", "Abono_Pagado", "Deuda"].includes(tipo);
-            let fechaFormateada = formato12h(m[0]);
-            let metodo = m[4] ? m[4] : "Efectivo";
-            let detalleGasto = m[5] ? m[5] : ""; // Columna F del Excel para el detalle
+            let metodo = m[4] || "Efectivo";
+            let detalleExtra = m[5] || ""; // AQUÍ ESTÁ EL DETALLE QUE BUSCAMOS
 
             if(["Venta","Abono_Cobrado"].includes(tipo)) saldoBancario += mnt;
             if(esGasto) saldoBancario -= mnt;
@@ -125,29 +95,16 @@
                 <div style="flex:1">
                     <b style="${esGasto ? 'color:var(--rose)' : ''}">${m[2]}</b> 
                     <small style="color:var(--cyan)">(${tipo})</small>
-                    <span class="detail-text">📅 ${fechaFormateada}</span>
+                    <span class="detail-text">📅 ${formato12h(m[0])}</span>
                     <span class="detail-text">💳 ${metodo}</span>
-                    ${detalleGasto ? `<span class="desc-highlight">📝 ${detalleGasto}</span>` : ''}
+                    ${detalleExtra ? `<span class="desc-box">📝 ${detalleExtra}</span>` : ''}
                 </div>
-                <b style="${esGasto ? 'color:var(--rose)' : 'color:var(--green)'}; font-family:'Orbitron'; font-size:0.9rem;">${mnt.toFixed(2)} Bs</b>
+                <b style="${esGasto ? 'color:var(--rose)' : 'color:var(--green)'}">${mnt.toFixed(2)} Bs</b>
             </div>`;
-        });
-
-        db.entidades.slice(1).forEach(e => {
-            let sActual = Math.round(parseFloat(e[2]) * 100) / 100;
-            if(Math.abs(sActual) >= 0.01 && !["VENTA","VENTAS","GASTO","ENTRADA"].includes(e[0].toUpperCase())) { 
-                let esD = e[1] === "Proveedor";
-                pendHtml += `<div class="list-item" style="border-left-color:${esD?'var(--rose)':'var(--amber)'}" onclick="ejecutarAbono('${e[0]}', ${sActual}, '${e[1]}')">
-                    <div><b>${e[0]}</b><br><span class="badge" style="color:${esD?'var(--rose)':'var(--amber)'}">${esD?'Yo Debo':'Me Deben'}</span></div>
-                    <div style="text-align:right"><b>${sActual.toFixed(2)} Bs</b><br><small style="color:var(--cyan)">$ ${(sActual/db.tasa).toFixed(2)}</small></div>
-                </div>`;
-            }
         });
 
         document.getElementById('bs-total').innerText = saldoBancario.toFixed(2) + " Bs";
         document.getElementById('usd-total').innerText = "≈ " + (saldoBancario / db.tasa).toFixed(2) + " $";
-        document.getElementById('lista-pendientes-dash').innerHTML = pendHtml || "✅ TODO AL DÍA";
-        document.getElementById('lista-para-abonar').innerHTML = pendHtml;
         document.getElementById('lista-historial').innerHTML = histHtml;
     }
 
@@ -157,19 +114,9 @@
         let m = prompt("Monto en Bs:");
         if(!m) return;
         let mp = prompt("Método (Efectivo, Pago Móvil, etc):", "Pago Móvil");
-        
-        // El detalle es opcional
-        let detalle = prompt("Detalle/Motivo (Opcional):", "");
+        let det = prompt("¿En qué se gastó o detalle? (Opcional):", "");
 
-        enviar({ accion:"REGISTRAR", tipo, persona:nom, monto:parseFloat(m), tasa:db.tasa, descripcion: mp, detalle: detalle });
-    }
-
-    function ejecutarAbono(nom, sal, tipo) {
-        let m = prompt(`ABONO para ${nom}\nSaldo: ${sal} Bs`, sal);
-        if(!m) return;
-        let mp = prompt("Método:", "Pago Móvil");
-        let det = prompt("Detalle del abono (Opcional):", "");
-        enviar({ accion:"REGISTRAR", tipo: tipo==="Proveedor"?"Abono_Pagado":"Abono_Cobrado", persona:nom, monto:parseFloat(m), tasa:db.tasa, descripcion: mp, detalle: det });
+        enviar({ accion:"REGISTRAR", tipo, persona:nom, monto:parseFloat(m), tasa:db.tasa, descripcion: mp, detalle: det });
     }
 
     async function enviar(d) {
@@ -178,9 +125,14 @@
         location.reload();
     }
 
-    function closeToast(ok) { document.getElementById('toast').classList.remove('show'); if(!ok) setTasa(); }
-    async function setTasa() { let n = prompt("Nueva Tasa BCV:", db.tasa); if(n && n !== db.tasa) enviar({accion:"CAMBIAR_TASA", valor: parseFloat(n)}); }
-    function nav(id, btn) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); } }
+    function nav(id, btn) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    }
     window.onload = init;
 </script>
 </body>
