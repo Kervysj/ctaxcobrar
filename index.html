@@ -3,54 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AdriSweets Pro - Sistema Completo</title>
+    <title>AdriSweets Pro - Control Total</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #05070a; --card: #111827; --cyan: #22d3ee; --rose: #f43f5e; --amber: #fbbf24; --green: #10b981; --gray: #475569; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 90px; }
-        .header { padding: 25px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; }
-        .tasa-container { display: inline-flex; align-items: center; gap: 10px; background: rgba(31,41,55,0.5); padding: 8px 18px; border-radius: 50px; border: 1px solid #374151; font-family: 'Orbitron'; font-size: 0.8rem; margin-bottom: 10px; }
-        .main-balance { font-family: 'Orbitron'; font-size: 2.2rem; margin: 5px 0; }
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
-        .btn-touch { background: var(--card); padding: 20px 10px; border-radius: 18px; border: 1px solid #1f2937; text-align: center; border-bottom: 4px solid transparent; cursor: pointer; font-size: 0.85rem; }
-        .btn-full { grid-column: span 2; }
-        .list-item { background: var(--card); padding: 16px; border-radius: 18px; margin-bottom: 12px; border-left: 6px solid transparent; display: flex; justify-content: space-between; align-items: center; }
-        .detail-text { font-size: 0.7rem; color: var(--gray); margin-top: 4px; display: block; }
-        .info-box { background: rgba(34, 211, 238, 0.1); padding: 8px; border-radius: 8px; margin-top: 8px; border-left: 3px solid var(--cyan); font-size: 0.8rem; color: #eee; }
-        .view { display: none; padding: 20px; }
+        .header { padding: 20px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; }
+        .tasa-container { display: inline-flex; align-items: center; gap: 10px; background: rgba(31,41,55,0.5); padding: 6px 15px; border-radius: 50px; border: 1px solid #374151; font-family: 'Orbitron'; font-size: 0.75rem; margin-bottom: 8px; }
+        .main-balance { font-family: 'Orbitron'; font-size: 2rem; margin: 5px 0; }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .btn-touch { background: var(--card); padding: 15px 5px; border-radius: 15px; border: 1px solid #1f2937; text-align: center; border-bottom: 4px solid transparent; cursor: pointer; font-size: 0.8rem; }
+        .section-title { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--cyan); padding: 10px 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin: 0 15px 10px 15px; border-left: 5px solid transparent; display: flex; justify-content: space-between; align-items: center; }
+        .info-box { background: rgba(34, 211, 238, 0.1); padding: 8px; border-radius: 8px; margin-top: 8px; border-left: 3px solid var(--cyan); font-size: 0.75rem; color: #eee; width: 100%; }
+        .badge-deuda { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+        .view { display: none; }
         .view.active { display: block; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1f2937; }
-        .nav-btn { background: none; border: none; color: var(--gray); font-family: 'Orbitron'; font-size: 0.75rem; font-weight: bold; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1f2937; z-index: 100; }
+        .nav-btn { background: none; border: none; color: var(--gray); font-family: 'Orbitron'; font-size: 0.7rem; font-weight: bold; }
         .nav-btn.active { color: var(--cyan); }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="tasa-container" onclick="setTasa()">BCV: <span id="tasa-val">0.00</span></div>
+    <div class="tasa-container">BCV: <span id="tasa-val">0.00</span></div>
     <div id="bs-total" class="main-balance">0.00 Bs</div>
-    <div id="usd-total" style="color:var(--cyan)">≈ 0.00 $</div>
+    <div id="usd-total" style="color:var(--cyan); font-size: 0.9rem;">≈ 0.00 $</div>
 </div>
 
 <div id="v-dash" class="view active">
     <div class="action-grid">
-        <div class="btn-touch" style="border-bottom-color:var(--green)" onclick="registrarSeguro('Venta')">💰<br>Venta</div>
-        <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarSeguro('Gasto')">📤<br><span style="color:var(--rose)">Gasto</span></div>
-        <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarSeguro('Deuda')">📦<br>Nueva Deuda</div>
-        <div class="btn-touch" style="border-bottom-color:var(--amber)" onclick="registrarSeguro('Fiado')">👤<br>Fiar Dulce</div>
-        <div class="btn-touch btn-full" style="border-bottom-color:var(--cyan)" onclick="nav('v-abonos')">💸<br>PAGAR / COBRAR (Abonos)</div>
+        <div class="btn-touch" style="border-bottom-color:var(--green)" onclick="registrarNuevo('Venta')">💰<br>Venta</div>
+        <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarNuevo('Gasto')">📤<br><span style="color:var(--rose)">Gasto</span></div>
+        <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarNuevo('Deuda')">📦<br>Nueva Deuda</div>
+        <div class="btn-touch" style="border-bottom-color:var(--amber)" onclick="registrarNuevo('Fiado')">👤<br>Fiar Dulce</div>
     </div>
-    <div id="lista-pendientes-dash"></div>
-</div>
-
-<div id="v-abonos" class="view">
-    <h3 style="font-family:'Orbitron'; font-size:0.9rem; color:var(--cyan)">SELECCIONA PARA ABONAR:</h3>
-    <div id="lista-para-abonar"></div>
-    <button onclick="nav('v-dash')" style="width:100%; color:var(--gray); background:none; border:none; padding:20px; font-family:'Orbitron';">← VOLVER</button>
+    
+    <div class="section-title">Recordatorio: Cuentas Pendientes</div>
+    <div id="lista-pendientes-inicio"></div>
 </div>
 
 <div id="v-hist" class="view">
+    <div class="section-title" style="margin-top:15px">Historial de Movimientos</div>
     <div id="lista-historial"></div>
 </div>
 
@@ -69,20 +65,18 @@
             db = await r.json();
             document.getElementById('tasa-val').innerText = db.tasa;
             render();
-        } catch(e) { alert("Error de conexión"); }
+        } catch(e) { alert("Error de carga"); }
     }
 
     function render() {
         let saldoBancario = parseFloat(db.saldoInicial) || 0;
         let pendHtml = "", histHtml = "";
 
-        // Historial y Saldo
+        // Historial
         db.movimientos.slice(1).reverse().forEach(m => {
             let mnt = parseFloat(m[3]) || 0;
             let tipo = m[1];
             let esGasto = ["Gasto", "Abono_Pagado", "Deuda"].includes(tipo);
-            let detalleGasto = m[5] || ""; // Columna F
-
             if(["Venta","Abono_Cobrado"].includes(tipo)) saldoBancario += mnt;
             if(esGasto) saldoBancario -= mnt;
             
@@ -91,63 +85,68 @@
                 <div style="flex:1">
                     <b style="${esGasto ? 'color:var(--rose)' : ''}">${m[2]}</b> 
                     <small style="color:var(--cyan)">(${tipo})</small>
-                    <span class="detail-text">📅 ${m[0]} | 💳 ${m[4] || 'Efectivo'}</span>
-                    ${detalleGasto ? `<div class="info-box">ℹ️ ${detalleGasto}</div>` : ''}
+                    <div style="font-size:0.65rem; color:var(--gray); margin-top:3px;">📅 ${m[0]}</div>
+                    ${m[5] ? `<div class="info-box">ℹ️ ${m[5]}</div>` : ''}
                 </div>
                 <b style="${esGasto ? 'color:var(--rose)' : 'color:var(--green)'}">${mnt.toFixed(2)} Bs</b>
             </div>`;
         });
 
-        // Listado de Deudas (Pagar/Cobrar)
+        // Pendientes en Inicio (Recordatorio)
         db.entidades.slice(1).forEach(e => {
-            let sActual = parseFloat(e[2]) || 0;
-            if(Math.abs(sActual) > 0.1) {
-                let esD = e[1] === "Proveedor";
-                let card = `<div class="list-item" style="border-left-color:${esD?'var(--rose)':'var(--amber)'}" onclick="ejecutarAbono('${e[0]}', ${sActual}, '${e[1]}')">
-                    <div><b>${e[0]}</b><br><small style="color:${esD?'var(--rose)':'var(--amber)'}">${esD?'YO DEBO':'ME DEBEN'}</small></div>
-                    <div style="text-align:right"><b>${sActual.toFixed(2)} Bs</b></div>
+            let sal = parseFloat(e[2]) || 0;
+            if(Math.abs(sal) > 0.1) {
+                let esYoDebo = e[1] === "Proveedor";
+                pendHtml += `
+                <div class="list-item" style="border-left-color:${esYoDebo?'var(--rose)':'var(--amber)'}" onclick="opcionesPersona('${e[0]}', ${sal}, '${e[1]}')">
+                    <div>
+                        <b>${e[0]}</b><br>
+                        <span class="badge-deuda" style="background:${esYoDebo?'rgba(244,63,94,0.2)':'rgba(251,191,36,0.2)'}; color:${esYoDebo?'var(--rose)':'var(--amber)'}">
+                            ${esYoDebo?'DEBO':'ME DEBEN'}
+                        </span>
+                    </div>
+                    <div style="text-align:right"><b>${sal.toFixed(2)} Bs</b></div>
                 </div>`;
-                pendHtml += card;
             }
         });
 
         document.getElementById('bs-total').innerText = saldoBancario.toFixed(2) + " Bs";
         document.getElementById('usd-total').innerText = "≈ " + (saldoBancario / db.tasa).toFixed(2) + " $";
-        document.getElementById('lista-para-abonar').innerHTML = pendHtml || "Sin cuentas pendientes";
+        document.getElementById('lista-pendientes-inicio').innerHTML = pendHtml || "<p style='padding:20px; color:var(--gray)'>No hay deudas pendientes.</p>";
         document.getElementById('lista-historial').innerHTML = histHtml;
     }
 
-    async function registrarSeguro(tipo) {
-        let nom = (tipo === "Venta") ? "ENTRADA" : (tipo === "Gasto" ? "GASTO" : prompt("Nombre:"));
-        if(!nom) return;
-        let m = prompt("Monto en Bs:");
-        if(!m) return;
-        let mp = prompt("Método:", "Pago Móvil");
-        let det = prompt("¿En qué se gastó? (Opcional):", "");
-        enviar({ accion:"REGISTRAR", tipo, persona:nom, monto:parseFloat(m), tasa:db.tasa, descripcion: mp, detalle: det });
+    function opcionesPersona(nom, sal, tipoOriginal) {
+        let opc = prompt(`Gestión para ${nom}\nSaldo actual: ${sal} Bs\n\nEscribe:\n1 - Cobrar/Pagar Abono\n2 - Sumar más deuda`, "1");
+        if(opc === "1") {
+            let m = prompt(`Monto a ABONAR (Saldo: ${sal} Bs):`, sal);
+            if(m) registrarNuevo(tipoOriginal === "Proveedor" ? "Abono_Pagado" : "Abono_Cobrado", nom, m);
+        } else if(opc === "2") {
+            let m = prompt(`Monto de NUEVA DEUDA para ${nom}:`);
+            if(m) registrarNuevo(tipoOriginal === "Proveedor" ? "Deuda" : "Fiado", nom, m);
+        }
     }
 
-    function ejecutarAbono(nom, sal, tipo) {
-        let m = prompt(`Abono para ${nom} (Saldo: ${sal} Bs):`, sal);
-        if(!m) return;
-        let mp = prompt("Método:", "Pago Móvil");
-        let det = prompt("Nota del abono:", "");
-        enviar({ accion:"REGISTRAR", tipo: tipo==="Proveedor"?"Abono_Pagado":"Abono_Cobrado", persona:nom, monto:parseFloat(m), tasa:db.tasa, descripcion: mp, detalle: det });
-    }
+    async function registrarNuevo(tipo, nomInput = null, mntInput = null) {
+        let persona = nomInput || ((tipo === "Venta") ? "ENTRADA" : (tipo === "Gasto" ? "GASTO" : prompt("¿Nombre de la persona?")));
+        if(!persona) return;
+        let monto = mntInput || prompt("Monto en Bs:");
+        if(!monto) return;
+        let metodo = prompt("Método (Efectivo, Pago Móvil, etc):", "Pago Móvil");
+        let detalle = prompt("¿Detalle o nota adicional?", "");
 
-    async function enviar(d) {
         document.body.style.opacity="0.5";
-        await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(d)});
+        await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({
+            accion:"REGISTRAR", tipo, persona, monto:parseFloat(monto), tasa:db.tasa, descripcion: metodo, detalle: detalle
+        })});
         location.reload();
     }
 
     function nav(id, btn) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(btn) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
     }
     window.onload = init;
 </script>
