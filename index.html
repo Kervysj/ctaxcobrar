@@ -3,37 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AdriSweets Expert</title>
+    <title>AdriSweets Business Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #05070a; --card: #111827; --cyan: #22d3ee; --rose: #f43f5e; --amber: #fbbf24; --green: #10b981; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 90px; }
         
-        /* Header Premium */
-        .header { padding: 25px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; }
-        .tasa-tag { color: var(--cyan); border: 1px solid var(--cyan); padding: 4px 12px; border-radius: 50px; font-size: 0.7rem; font-family: 'Orbitron'; }
-        .main-money { font-family: 'Orbitron'; font-size: 2.2rem; margin: 10px 0; }
+        .header { padding: 30px 20px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; }
+        .tasa-pill { border: 1px solid var(--cyan); color: var(--cyan); padding: 5px 15px; border-radius: 50px; font-family: 'Orbitron'; font-size: 0.75rem; display: inline-block; margin-bottom: 15px; }
+        .main-balance { font-family: 'Orbitron'; font-size: 2.5rem; margin: 5px 0; }
+        .sub-balance { color: var(--cyan); font-size: 1rem; opacity: 0.8; }
 
-        /* KPI Row */
-        .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; margin-top: -15px; }
-        .kpi-card { background: var(--card); padding: 12px; border-radius: 15px; border-top: 3px solid #334155; }
+        /* KPI Row (Lo que debes y te deben) */
+        .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; margin-top: -20px; }
+        .kpi-card { background: var(--card); padding: 12px; border-radius: 15px; border: 1px solid #334155; text-align: center; }
 
-        /* Botonera Principal */
+        /* Botonera Touch (La de tu imagen) */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
-        .btn-touch { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #1f2937; text-align: center; }
+        .btn-touch { background: var(--card); padding: 25px 15px; border-radius: 20px; border: 1px solid #1f2937; text-align: center; transition: 0.2s; }
         .btn-touch:active { transform: scale(0.95); background: #1e293b; }
+        .btn-touch i { display: block; font-size: 1.5rem; margin-bottom: 10px; }
 
-        /* Vistas */
+        /* Vistas y Listas */
         .view { display: none; padding: 20px; animation: fadeIn 0.3s; }
         .view.active { display: block; }
-
-        /* Listas Detalladas */
-        .item-list { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 12px; border-left: 5px solid transparent; }
-        .detail-box { font-size: 0.75rem; color: #94a3b8; margin-top: 8px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; }
-
+        .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 5px solid transparent; }
+        
         /* Nav */
         .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1f2937; }
-        .nav-btn { background: none; border: none; color: #64748b; font-size: 0.65rem; font-weight: bold; }
+        .nav-btn { background: none; border: none; color: #64748b; font-weight: bold; font-size: 0.7rem; }
         .nav-btn.active { color: var(--cyan); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -42,17 +41,17 @@
 <body>
 
 <div class="header">
-    <div class="tasa-tag" onclick="cambiarTasa()">BCV: <span id="tasa-ui">0.00</span> ⚙️</div>
-    <div class="main-money" id="bs-ui">0.00 Bs</div>
-    <div style="color:var(--cyan); font-size:0.9rem" id="usd-ui">≈ 0.00 $</div>
+    <div class="tasa-pill" onclick="setTasa()">BCV: <span id="tasa-val">0.00</span> ⚙️</div>
+    <div class="main-balance" id="bs-total">0.00 Bs</div>
+    <div class="sub-balance" id="usd-total">≈ 0.00 $</div>
 </div>
 
 <div class="kpi-row">
-    <div class="kpi-card" style="border-color:var(--rose)">
+    <div class="kpi-card" style="border-bottom: 3px solid var(--rose)">
         <small style="color:#94a3b8">DEBO</small><br>
         <b id="kpi-debo" style="color:var(--rose)">0 Bs</b>
     </div>
-    <div class="kpi-card" style="border-color:var(--amber)">
+    <div class="kpi-card" style="border-bottom: 3px solid var(--amber)">
         <small style="color:#94a3b8">ME DEBEN</small><br>
         <b id="kpi-calle" style="color:var(--amber)">0 Bs</b>
     </div>
@@ -60,115 +59,118 @@
 
 <div id="v-dash" class="view active">
     <div class="action-grid">
-        <div class="btn-touch" style="border-bottom: 3px solid var(--green)" onclick="navReg('Venta')">💰<br>Venta</div>
-        <div class="btn-touch" style="border-bottom: 3px solid var(--rose)" onclick="navReg('Deuda')">📦<br>Nueva Deuda</div>
-        <div class="btn-touch" style="border-bottom: 3px solid var(--amber)" onclick="navReg('Fiado')">👤<br>Fiar Dulce</div>
-        <div class="btn-touch" style="border-bottom: 3px solid var(--cyan)" onclick="abrirAbono()">✅<br>Abonar / Cobrar</div>
+        <div class="btn-touch" style="border-bottom: 4px solid var(--green)" onclick="registrarRapido('Venta')">💰<br>Venta</div>
+        <div class="btn-touch" style="border-bottom: 4px solid var(--rose)" onclick="registrarRapido('Deuda')">📦<br>Nueva Deuda</div>
+        <div class="btn-touch" style="border-bottom: 4px solid var(--amber)" onclick="registrarRapido('Fiado')">👤<br>Fiar Dulce</div>
+        <div class="btn-touch" style="border-bottom: 4px solid var(--cyan)" onclick="irAAbonos()">💸<br>Pagar/Cobrar</div>
     </div>
 </div>
 
 <div id="v-hist" class="view">
-    <h3 style="color:var(--cyan)">HISTORIALES</h3>
-    <button onclick="verHistorial('Pagadas')" class="btn-touch" style="width:100%; margin-bottom:10px;">Cuentas Pagadas (Proveedores)</button>
-    <button onclick="verHistorial('Cobradas')" class="btn-touch" style="width:100%;">Cuentas Cobradas (Clientes)</button>
-    <div id="lista-historial" style="margin-top:20px;"></div>
+    <h3 style="color:var(--cyan)">HISTORIAL DETALLADO</h3>
+    <div id="lista-historial"></div>
 </div>
 
-<div id="v-abono" class="view">
-    <h3 id="abono-titulo">Selecciona a quién</h3>
-    <div id="lista-seleccion"></div>
-    <button onclick="cambiarVista('v-dash')" style="width:100%; background:none; border:none; color:#64748b; margin-top:20px;">Volver</button>
+<div id="v-abonos" class="view">
+    <h3>SELECCIONA CUENTA</h3>
+    <div id="lista-para-abonar"></div>
+    <button onclick="nav('v-dash')" style="width:100%; padding:15px; background:none; border:none; color:#64748b;">Volver</button>
 </div>
 
 <nav class="nav">
-    <button class="nav-btn active" onclick="cambiarVista('v-dash', this)">INICIO</button>
-    <button class="nav-btn" onclick="cambiarVista('v-hist', this)">HISTORIAL</button>
+    <button class="nav-btn active" onclick="nav('v-dash', this)">INICIO</button>
+    <button class="nav-btn" onclick="nav('v-hist', this)">HISTORIAL</button>
 </nav>
 
 <script>
-    const URL = "https://script.google.com/macros/s/AKfycbx79T15qYpqB09Vf22uGiABkH3CLeKaBIi7yiYY2s60Kufk-Wqu4eB6WY2sLzNEAql_/exec";
-    let data = {};
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx79T15qYpqB09Vf22uGiABkH3CLeKaBIi7yiYY2s60Kufk-Wqu4eB6WY2sLzNEAql_/exec";
+    let db = {};
 
-    async function cargar() {
-        const r = await fetch(URL);
-        data = await r.json();
+    async function init() {
+        const r = await fetch(SCRIPT_URL);
+        db = await r.json();
         render();
     }
 
     function render() {
-        document.getElementById('tasa-ui').innerText = data.tasa;
-        let bs = parseFloat(data.saldoInicial);
+        document.getElementById('tasa-val').innerText = db.tasa;
+        let saldo = parseFloat(db.saldoInicial);
         let debo = 0, calle = 0;
+        let histHtml = "";
 
-        data.movimientos.slice(1).forEach(m => {
+        db.movimientos.slice(1).reverse().forEach(m => {
             let mnt = parseFloat(m[3]) || 0;
-            if(m[1] === "Venta" || m[1] === "Abono_Cobrado") bs += mnt;
-            if(m[1] === "Abono_Pagado" || m[1] === "Gasto") bs -= mnt;
+            // Solo lo que es Venta o Cobro suma al banco real
+            if(m[1] === "Venta" || m[1] === "Abono_Cobrado") saldo += mnt;
+            if(m[1] === "Abono_Pagado" || m[1] === "Gasto") saldo -= mnt;
+
+            histHtml += `
+            <div class="list-item" style="border-left-color: ${m[1] === 'Venta' ? 'var(--green)' : 'var(--cyan)'}">
+                <b>${m[2]}</b> <span style="float:right">${mnt} Bs</span>
+                <div style="font-size:0.7rem; color:#64748b; margin-top:5px;">${m[1]} | ${m[5]}</div>
+            </div>`;
         });
 
-        data.entidades.slice(1).forEach(e => {
+        db.entidades.slice(1).forEach(e => {
             let s = parseFloat(e[2]);
             if(e[1] === "Proveedor") debo += s;
             else calle += s;
         });
 
-        document.getElementById('bs-ui').innerText = bs.toLocaleString() + " Bs";
-        document.getElementById('usd-ui').innerText = "≈ " + (bs / data.tasa).toFixed(2) + " $";
+        document.getElementById('bs-total').innerText = saldo.toLocaleString() + " Bs";
+        document.getElementById('usd-total').innerText = "≈ " + (saldo / db.tasa).toFixed(2) + " $";
         document.getElementById('kpi-debo').innerText = debo.toLocaleString() + " Bs";
         document.getElementById('kpi-calle').innerText = calle.toLocaleString() + " Bs";
+        document.getElementById('lista-historial').innerHTML = histHtml;
     }
 
-    function abrirAbono() {
+    function registrarRapido(tipo) {
+        let persona = prompt("¿Nombre de la persona o proveedor?");
+        if(!persona) return;
+        let monto = prompt("Monto en Bolívares:");
+        if(!monto) return;
+        let ref = prompt("Descripción corta (Ej: Torta Arequipe):");
+        
+        enviarData({ accion: "REGISTRAR", tipo, persona, monto: parseFloat(monto), tasa: db.tasa, ref, estatus: "Pendiente" });
+    }
+
+    function irAAbonos() {
         let html = "";
-        data.entidades.slice(1).forEach(e => {
-            let saldo = parseFloat(e[2]);
-            if(saldo > 0) {
+        db.entidades.slice(1).forEach(e => {
+            let s = parseFloat(e[2]);
+            if(s > 0) {
                 html += `
-                <div class="item-list" style="border-left-color: ${e[1] === 'Proveedor' ? 'var(--rose)' : 'var(--amber)'}" onclick="confirmarAbono('${e[0]}', ${saldo}, '${e[1]}')">
-                    <b>${e[0]}</b>
-                    <div style="float:right; color:white">${saldo.toLocaleString()} Bs</div>
-                    <div class="detail-box">Toca para abonar o liquidar cuenta</div>
+                <div class="list-item" style="border-left-color:var(--cyan)" onclick="ejecutarAbono('${e[0]}', ${s}, '${e[1]}')">
+                    <b>${e[0]}</b> <span style="float:right">${s} Bs</span>
+                    <div style="font-size:0.7rem; color:#94a3b8">Toca para pagar/cobrar saldo</div>
                 </div>`;
             }
         });
-        document.getElementById('lista-seleccion').innerHTML = html || "No hay cuentas pendientes";
-        cambiarVista('v-abono');
+        document.getElementById('lista-para-abonar').innerHTML = html || "No hay cuentas pendientes";
+        nav('v-abonos');
     }
 
-    function confirmarAbono(nombre, saldo, tipo) {
-        let monto = prompt(`¿Cuánto vas a ${tipo === 'Proveedor' ? 'PAGAR' : 'COBRAR'} a ${nombre}?\nSaldo pendiente: ${saldo} Bs`, saldo);
-        if(monto) {
-            enviarRegistro(tipo === 'Proveedor' ? 'Abono_Pagado' : 'Abono_Cobrado', nombre, parseFloat(monto));
-        }
+    function ejecutarAbono(nombre, saldo, tipoEnt) {
+        let mnt = prompt(`Saldo de ${nombre}: ${saldo} Bs. ¿Cuánto vas a abonar?`, saldo);
+        if(!mnt) return;
+        let t = (tipoEnt === "Proveedor") ? "Abono_Pagado" : "Abono_Cobrado";
+        enviarData({ accion: "REGISTRAR", tipo: t, persona: nombre, monto: parseFloat(mnt), tasa: db.tasa, ref: "Abono de cuenta", estatus: "Pagado" });
     }
 
-    async function enviarRegistro(tipo, persona, monto) {
-        let ref = prompt("Descripción (Ej: Torta de Arequipe, Pago factura, etc):");
-        const payload = { accion: "REGISTRAR", tipo, persona, monto, tasa: data.tasa, ref, estatus: "Pagado", fechaVence: "" };
-        await fetch(URL, {method:'POST', mode:'no-cors', body: JSON.stringify(payload)});
+    async function enviarData(p) {
+        await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify(p)});
         location.reload();
     }
 
-    function verHistorial(modo) {
-        let html = "";
-        data.movimientos.slice(1).forEach(m => {
-            if((modo === 'Pagadas' && m[1] === 'Abono_Pagado') || (modo === 'Cobradas' && m[1] === 'Abono_Cobrado')) {
-                html += `
-                <div class="item-list" style="border-left-color: var(--green)">
-                    <b>${m[2]}</b>
-                    <div style="float:right">${m[3]} Bs</div>
-                    <div class="detail-box">
-                        Fecha: ${new Date(m[0]).toLocaleDateString()}<br>
-                        Detalle: ${m[5]}<br>
-                        Estatus: ✅ Finalizado
-                    </div>
-                </div>`;
-            }
-        });
-        document.getElementById('lista-historial').innerHTML = html || "Historial vacío";
+    async function setTasa() {
+        let n = prompt("Nueva Tasa BCV:", db.tasa);
+        if(n) {
+            await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body: JSON.stringify({accion:"CAMBIAR_TASA", valor: parseFloat(n)})});
+            location.reload();
+        }
     }
 
-    function cambiarVista(id, btn) {
+    function nav(id, btn) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         if(btn) {
@@ -177,7 +179,7 @@
         }
     }
 
-    window.onload = cargar;
+    window.onload = init;
 </script>
 </body>
 </html>
