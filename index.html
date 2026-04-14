@@ -4,54 +4,161 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AdriSweets Pro - Richard Fix</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #05070a; --card: #111827; --cyan: #22d3ee; --rose: #f43f5e; --amber: #fbbf24; --green: #10b981; --gray: #475569; }
+        :root { 
+            --bg: #0b0f1a; 
+            --card: #161e2d; 
+            --cyan: #22d3ee; 
+            --rose: #ff4d6d; 
+            --amber: #fbbf24; 
+            --green: #2dd4bf; 
+            --gray: #94a3b8; 
+            --text-main: #f8fafc;
+        }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 90px; transition: opacity 0.3s; }
-        .header { padding: 20px; background: #0f172a; border-bottom: 1px solid #1f2937; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .tasa-container { display: inline-flex; align-items: center; gap: 10px; background: rgba(31,41,55,0.5); padding: 6px 15px; border-radius: 50px; border: 1px solid #374151; font-family: 'Orbitron'; font-size: 0.75rem; margin-bottom: 8px; }
-        .main-balance { font-family: 'Orbitron'; font-size: 2rem; margin: 5px 0; }
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
-        .btn-touch { background: var(--card); padding: 15px 5px; border-radius: 15px; border: 1px solid #1f2937; text-align: center; border-bottom: 4px solid transparent; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-        .btn-touch:active { transform: scale(0.98); opacity: 0.8; }
-        .section-title { font-family: 'Orbitron'; font-size: 0.75rem; color: var(--cyan); padding: 15px 20px 5px 20px; text-transform: uppercase; }
-        .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin: 0 15px 10px 15px; border-left: 5px solid transparent; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .view { display: none; animation: fadeIn 0.3s; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding-bottom: 90px; 
+            line-height: 1.4;
+        }
+
+        /* HEADER - Más limpio y legible */
+        .header { 
+            padding: 25px 20px; 
+            background: #0f172a; 
+            border-bottom: 1px solid #1e293b; 
+            text-align: center; 
+            position: sticky; 
+            top: 0; 
+            z-index: 100;
+        }
+        .tasa-container { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: #1e293b; 
+            padding: 5px 15px; 
+            border-radius: 8px; 
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem; 
+            color: var(--cyan);
+            margin-bottom: 12px;
+            border: 1px solid #334155;
+        }
+        .main-balance { 
+            font-family: 'Roboto Mono', monospace; 
+            font-size: 2.4rem; 
+            font-weight: 800;
+            margin: 5px 0; 
+            letter-spacing: -1px;
+            color: #fff;
+        }
+        .sub-balance {
+            font-family: 'Roboto Mono', monospace;
+            color: var(--cyan); 
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* BOTONES - Mejor tacto visual */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
+        .btn-touch { 
+            background: var(--card); 
+            padding: 18px 10px; 
+            border-radius: 16px; 
+            border: 1px solid #2d3748; 
+            text-align: center; 
+            cursor: pointer; 
+            font-size: 0.85rem; 
+            font-weight: 700;
+            color: #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn-touch:active { transform: translateY(2px); background: #1e293b; }
+
+        .section-title { 
+            font-size: 0.75rem; 
+            font-weight: 800;
+            color: var(--gray); 
+            padding: 10px 20px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+
+        /* LISTAS - Contraste alto */
+        .list-item { 
+            background: var(--card); 
+            padding: 16px; 
+            border-radius: 14px; 
+            margin: 0 15px 12px 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border: 1px solid #1e293b;
+        }
+        .list-item b { font-size: 1rem; color: #fff; }
+        .list-item .amount-text { 
+            font-family: 'Roboto Mono', monospace; 
+            font-size: 1.05rem; 
+            font-weight: 700;
+            text-align: right;
+        }
+        .list-item small { color: var(--gray); font-size: 0.75rem; }
+
+        .view { display: none; animation: fadeIn 0.2s ease-out; }
         .view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1f2937; z-index: 100; }
-        .nav-btn { background: none; border: none; color: var(--gray); font-family: 'Orbitron'; font-size: 0.7rem; font-weight: bold; }
-        .nav-btn.active { color: var(--cyan); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* NAV - Fija y moderna */
+        .nav { 
+            position: fixed; bottom: 0; width: 100%; 
+            background: #0f172a; 
+            display: flex; justify-content: space-around; 
+            padding: 15px 0; 
+            border-top: 1px solid #1e293b; 
+            z-index: 100; 
+        }
+        .nav-btn { 
+            background: none; border: none; 
+            color: var(--gray); 
+            font-size: 0.75rem; 
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .nav-btn.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="tasa-container">BCV: <span id="tasa-val">0.00</span></div>
+    <div class="tasa-container">TASA HOY: <span id="tasa-val" style="color:#fff">0.00</span></div>
     <div id="bs-total" class="main-balance">0.00 Bs</div>
-    <div id="usd-total" style="color:var(--cyan); font-size: 0.9rem;">≈ 0.00 $</div>
+    <div id="usd-total" class="sub-balance">≈ 0.00 $</div>
 </div>
 
 <div id="v-dash" class="view active">
     <div class="action-grid">
-        <div class="btn-touch" style="border-bottom-color:var(--green)" onclick="registrarNuevo('Venta')">💰<br>Venta</div>
-        <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarNuevo('Gasto')">📤<br><span style="color:var(--rose)">Gasto</span></div>
-        <div class="btn-touch" style="border-bottom-color:var(--rose)" onclick="registrarNuevo('Deuda')">📦<br>Nueva Deuda</div>
-        <div class="btn-touch" style="border-bottom-color:var(--amber)" onclick="registrarNuevo('Fiado')">👤<br>Fiar Dulce</div>
+        <div class="btn-touch" style="border-top: 3px solid var(--green)" onclick="registrarNuevo('Venta')">💰 VENTA</div>
+        <div class="btn-touch" style="border-top: 3px solid var(--rose)" onclick="registrarNuevo('Gasto')">📤 GASTO</div>
+        <div class="btn-touch" style="border-top: 3px solid var(--rose)" onclick="registrarNuevo('Deuda')">📦 DEUDA</div>
+        <div class="btn-touch" style="border-top: 3px solid var(--amber)" onclick="registrarNuevo('Fiado')">👤 FIADO</div>
     </div>
     
-    <div class="section-title">Cuentas Pendientes (Ajuste x Tasa)</div>
+    <div class="section-title">Cuentas Pendientes</div>
     <div id="lista-pendientes-inicio"></div>
 </div>
 
 <div id="v-hist" class="view">
-    <div class="section-title" style="margin-top:15px">Historial Completo</div>
+    <div class="section-title" style="margin-top:15px">Historial Reciente</div>
     <div id="lista-historial"></div>
 </div>
 
 <nav class="nav">
-    <button class="nav-btn active" onclick="nav('v-dash', this)">INICIO</button>
+    <button class="nav-btn active" onclick="nav('v-dash', this)">DASHBOARD</button>
     <button class="nav-btn" onclick="nav('v-hist', this)">HISTORIAL</button>
 </nav>
 
@@ -64,22 +171,21 @@
             const r = await fetch(SCRIPT_URL);
             db = await r.json();
             
-            let confirmarTasaInicial = confirm(`¡Hola Richard!\nTasa actual: ${db.tasa} Bs\n\n¿La mantenemos?`);
+            let confirmarTasaInicial = confirm(`Richard, ¿mantenemos la tasa de ${db.tasa} Bs?`);
             if(!confirmarTasaInicial) {
-                let nuevaTasa = prompt("Nueva tasa del día:", db.tasa);
+                let nuevaTasa = prompt("Nueva tasa:", db.tasa);
                 if(nuevaTasa) db.tasa = parseFloat(nuevaTasa);
             }
 
-            document.getElementById('tasa-val').innerText = db.tasa;
+            document.getElementById('tasa-val').innerText = db.tasa.toFixed(2);
             render();
-        } catch(e) { alert("Error de conexión."); }
+        } catch(e) { alert("Error de conexión"); }
     }
 
     function render() {
         let saldoBancario = parseFloat(db.saldoInicial) || 0;
         let pendHtml = "", histHtml = "";
 
-        // PROCESAR MOVIMIENTOS
         db.movimientos.slice(1).reverse().forEach(m => {
             let mBs = parseFloat(m[3]) || 0;
             let mTasa = parseFloat(m[4]) || db.tasa;
@@ -92,36 +198,29 @@
             if(tipo === "Fiado") color = 'var(--amber)';
 
             histHtml += `
-            <div class="list-item" style="border-left-color:${color}">
+            <div class="list-item" style="border-right: 4px solid ${color}">
                 <div style="flex:1;">
-                    <b style="color:${color}">${m[2]}</b> <small>(${tipo})</small><br>
-                    <small style="color:var(--gray)">${m[0]} | Tasa: ${mTasa}</small>
+                    <b style="color:#fff">${m[2]}</b><br>
+                    <small>${m[0]} | ${tipo}</small>
                 </div>
-                <div style="text-align:right">
-                    <b>${mBs.toFixed(2)} Bs</b><br>
-                    <small style="color:var(--cyan)">$${(mBs/mTasa).toFixed(2)}</small>
+                <div class="amount-text" style="color:${color}">
+                    ${mBs.toFixed(2)} Bs<br>
+                    <small style="color:var(--gray); font-size:0.65rem">$${(mBs/mTasa).toFixed(2)}</small>
                 </div>
             </div>`;
         });
 
-        // PROCESAR DEUDAS CON LOGICA DE INDEXACIÓN
         db.entidades.slice(1).forEach(e => {
             let nombre = e[0];
             let saldoDolar = 0;
-            let infoOriginal = ""; // Para guardar el detalle visual de "antes"
+            let infoOriginal = "";
 
             db.movimientos.slice(1).forEach(m => {
                 if(m[2] === nombre) {
-                    let mBs = parseFloat(m[3]);
-                    let mTasa = parseFloat(m[4]) || db.tasa;
-                    let mD = mBs / mTasa;
+                    let mD = parseFloat(m[3]) / (parseFloat(m[4]) || db.tasa);
                     if(["Fiado", "Abono_Pagado", "Venta"].includes(m[1])) saldoDolar += mD;
                     else saldoDolar -= mD;
-                    
-                    // Guardamos una referencia del primer movimiento para el "Visual"
-                    if(!infoOriginal && m[1] !== "Abono_Cobrado" && m[1] !== "Abono_Pagado") {
-                        infoOriginal = `Deuda Orig: ${mBs.toFixed(2)} Bs (Tasa: ${mTasa})`;
-                    }
+                    if(!infoOriginal && !m[1].includes("Abono")) infoOriginal = `Orig: ${parseFloat(m[3]).toFixed(2)} Bs`;
                 }
             });
 
@@ -131,12 +230,11 @@
                 let esYoDebo = e[1] === "Proveedor";
                 
                 pendHtml += `
-                <div class="list-item" style="border-left-color:${esYoDebo?'var(--rose)':'var(--amber)'}" 
-                     onclick="opcionesPersona('${nombre}', ${absDolar}, ${montoHoy}, '${infoOriginal}', '${e[1]}')">
-                    <div><b>${nombre}</b><br><small style="color:var(--gray)">${infoOriginal}</small></div>
-                    <div style="text-align:right">
-                        <b style="color:${esYoDebo?'var(--rose)':'var(--amber)'}">${montoHoy.toFixed(2)} Bs</b><br>
-                        <small style="color:var(--cyan)">Valor: $${absDolar.toFixed(2)}</small>
+                <div class="list-item" onclick="opcionesPersona('${nombre}', ${absDolar}, ${montoHoy}, '${infoOriginal}', '${e[1]}')">
+                    <div><b>${nombre}</b><br><small>${infoOriginal}</small></div>
+                    <div class="amount-text" style="color:${esYoDebo?'var(--rose)':'var(--amber)'}">
+                        ${montoHoy.toFixed(2)} Bs<br>
+                        <small style="color:var(--cyan)">$${absDolar.toFixed(2)}</small>
                     </div>
                 </div>`;
             }
@@ -144,40 +242,29 @@
 
         document.getElementById('bs-total').innerText = saldoBancario.toFixed(2) + " Bs";
         document.getElementById('usd-total').innerText = "≈ " + (saldoBancario / db.tasa).toFixed(2) + " $";
-        document.getElementById('lista-pendientes-inicio').innerHTML = pendHtml || "<p style='padding:20px; color:var(--gray)'>Todo al día.</p>";
+        document.getElementById('lista-pendientes-inicio').innerHTML = pendHtml || "<p style='padding:20px; color:var(--gray)'>Sin pendientes</p>";
         document.getElementById('lista-historial').innerHTML = histHtml;
     }
 
     function opcionesPersona(nom, dolares, bsHoy, infoOrig, tipoEnt) {
         let esProv = tipoEnt === "Proveedor";
-        let mensajeVisual = `--- REPORTE DE VALOR ---\n` +
-                            `Persona: ${nom}\n` +
-                            `${infoOrig}\n` +
-                            `Valor en $: ${dolares.toFixed(2)}$\n\n` +
-                            `A TASA ACTUAL (${db.tasa}):\n` +
-                            `Monto a liquidar: ${bsHoy.toFixed(2)} Bs\n` +
-                            `------------------------\n` +
-                            `1. Registrar ABONO\n2. PAGAR TODO (${bsHoy.toFixed(2)} Bs)\n3. SUMAR MÁS\nElija (1,2,3):`;
-
-        let opc = prompt(mensajeVisual, "2");
+        let msj = `RESUMEN: ${nom}\n${infoOrig}\nValor $: ${dolares.toFixed(2)}\n\nAL CAMBIO HOY (${db.tasa}):\nTOTAL: ${bsHoy.toFixed(2)} Bs\n\n1. ABONO\n2. PAGAR TODO\n3. SUMAR\nOpción:`;
+        let opc = prompt(msj, "2");
         if(opc === "1") {
-            let m = prompt("Monto que entrega en Bs:");
+            let m = prompt("Monto Bs:");
             if(m) registrarNuevo(esProv ? "Abono_Pagado" : "Abono_Cobrado", nom, m);
         } else if(opc === "2") {
             registrarNuevo(esProv ? "Abono_Pagado" : "Abono_Cobrado", nom, bsHoy.toFixed(2));
         } else if(opc === "3") {
-            let m = prompt("Monto nuevo a sumar (Bs):");
+            let m = prompt("Monto nuevo (Bs):");
             if(m) registrarNuevo(esProv ? "Deuda" : "Fiado", nom, m);
         }
     }
 
     async function registrarNuevo(tipo, nom, mnt) {
-        let persona = nom || prompt("Nombre:");
-        if(!persona) return;
-        let monto = mnt || prompt("Monto Bs:");
-        if(!monto) return;
-
-        document.body.style.opacity="0.5";
+        let persona = nom || prompt("Nombre:"); if(!persona) return;
+        let monto = mnt || prompt("Monto Bs:"); if(!monto) return;
+        document.body.style.opacity="0.4";
         try {
             await fetch(SCRIPT_URL, {
                 method:'POST', mode:'no-cors', 
