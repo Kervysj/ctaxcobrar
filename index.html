@@ -17,14 +17,12 @@
         .btn-touch:active { transform: scale(0.98); opacity: 0.8; }
         .section-title { font-family: 'Orbitron'; font-size: 0.75rem; color: var(--cyan); padding: 15px 20px 5px 20px; text-transform: uppercase; }
         .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin: 0 15px 10px 15px; border-left: 5px solid transparent; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .info-box { background: rgba(251, 191, 36, 0.1); padding: 10px; border-radius: 10px; margin-top: 10px; border: 1px dashed rgba(251, 191, 36, 0.3); font-size: 0.8rem; color: var(--amber); width: 100%; display: block; }
         .view { display: none; animation: fadeIn 0.3s; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1f2937; z-index: 100; }
         .nav-btn { background: none; border: none; color: var(--gray); font-family: 'Orbitron'; font-size: 0.7rem; font-weight: bold; }
         .nav-btn.active { color: var(--cyan); }
-        .btn-info { width: calc(100% - 30px); margin: 5px 15px; padding: 10px; border-radius: 10px; background: rgba(34, 211, 238, 0.1); border: 1px solid var(--cyan); color: var(--cyan); font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -43,16 +41,12 @@
         <div class="btn-touch" style="border-bottom-color:var(--amber)" onclick="registrarNuevo('Fiado')">👤<br>Fiar Dulce</div>
     </div>
     
-    <div class="section-title">Cuentas Pendientes (Deudas)</div>
+    <div class="section-title">Cuentas Pendientes (Ajuste x Tasa)</div>
     <div id="lista-pendientes-inicio"></div>
-
-    <div class="section-title">Auditoría Temporal</div>
-    <button class="btn-info" onclick="verAuditoria('Cliente')">🔍 VER CUÁNDO ME FIARON (CLIENTES)</button>
-    <button class="btn-info" onclick="verAuditoria('Proveedor')" style="border-color:var(--rose); color:var(--rose); background:rgba(244,63,94,0.1)">🔍 VER CUÁNDO QUEDÉ DEBIENDO (YO)</button>
 </div>
 
 <div id="v-hist" class="view">
-    <div class="section-title" style="margin-top:15px">Historial de Movimientos</div>
+    <div class="section-title" style="margin-top:15px">Historial Completo</div>
     <div id="lista-historial"></div>
 </div>
 
@@ -70,157 +64,134 @@
             const r = await fetch(SCRIPT_URL);
             db = await r.json();
             
-            let confirmarTasaInicial = confirm(`¡Bienvenido Richard!\n\nLa tasa actual cargada es: ${db.tasa} Bs/$\n\n¿Deseas mantener esta tasa?`);
+            let confirmarTasaInicial = confirm(`¡Hola Richard!\nTasa actual: ${db.tasa} Bs\n\n¿La mantenemos?`);
             if(!confirmarTasaInicial) {
-                let nuevaTasa = prompt("Introduce la tasa del día actualizada:", db.tasa);
-                if(nuevaTasa && !isNaN(nuevaTasa)) {
-                    db.tasa = parseFloat(nuevaTasa);
-                }
+                let nuevaTasa = prompt("Nueva tasa del día:", db.tasa);
+                if(nuevaTasa) db.tasa = parseFloat(nuevaTasa);
             }
 
             document.getElementById('tasa-val').innerText = db.tasa;
             render();
-        } catch(e) { 
-            console.error(e);
-            alert("Error de conexión.");
-        }
+        } catch(e) { alert("Error de conexión."); }
     }
 
     function render() {
         let saldoBancario = parseFloat(db.saldoInicial) || 0;
         let pendHtml = "", histHtml = "";
 
+        // PROCESAR MOVIMIENTOS
         db.movimientos.slice(1).reverse().forEach(m => {
-            let mnt = parseFloat(m[3]) || 0;
+            let mBs = parseFloat(m[3]) || 0;
+            let mTasa = parseFloat(m[4]) || db.tasa;
             let tipo = m[1];
-            let esGasto = ["Gasto", "Abono_Pagado", "Deuda"].includes(tipo);
-            if(["Venta","Abono_Cobrado"].includes(tipo)) saldoBancario += mnt;
-            if(esGasto) saldoBancario -= mnt;
-            let detalleTexto = m[5] || ""; 
+
+            if(["Venta", "Abono_Cobrado"].includes(tipo)) saldoBancario += mBs;
+            if(["Gasto", "Abono_Pagado"].includes(tipo)) saldoBancario -= mBs;
+
+            let color = ["Deuda", "Gasto", "Abono_Pagado"].includes(tipo) ? 'var(--rose)' : 'var(--green)';
+            if(tipo === "Fiado") color = 'var(--amber)';
 
             histHtml += `
-            <div class="list-item" style="border-left-color:${esGasto ? 'var(--rose)' : 'var(--green)'}">
-                <div style="flex:1; min-width: 60%;">
-                    <b style="${esGasto ? 'color:var(--rose)' : ''}">${m[2]}</b> 
-                    <small style="color:var(--cyan)">(${tipo})</small>
-                    <div style="font-size:0.65rem; color:var(--gray); margin-top:3px;">📅 ${m[0]}</div>
+            <div class="list-item" style="border-left-color:${color}">
+                <div style="flex:1;">
+                    <b style="color:${color}">${m[2]}</b> <small>(${tipo})</small><br>
+                    <small style="color:var(--gray)">${m[0]} | Tasa: ${mTasa}</small>
                 </div>
-                <b style="${esGasto ? 'color:var(--rose)' : 'color:var(--green)'}">${mnt.toFixed(2)} Bs</b>
-                ${detalleTexto ? `<div class="info-box">📌 DETALLE: ${detalleTexto}</div>` : ''}
+                <div style="text-align:right">
+                    <b>${mBs.toFixed(2)} Bs</b><br>
+                    <small style="color:var(--cyan)">$${(mBs/mTasa).toFixed(2)}</small>
+                </div>
             </div>`;
         });
 
+        // PROCESAR DEUDAS CON LOGICA DE INDEXACIÓN
         db.entidades.slice(1).forEach(e => {
-            let sal = parseFloat(e[2]) || 0;
-            let nombre = e[0].toUpperCase();
-            if(Math.abs(sal) > 0.01 && nombre !== "ENTRADA" && nombre !== "GASTO") {
+            let nombre = e[0];
+            let saldoDolar = 0;
+            let infoOriginal = ""; // Para guardar el detalle visual de "antes"
+
+            db.movimientos.slice(1).forEach(m => {
+                if(m[2] === nombre) {
+                    let mBs = parseFloat(m[3]);
+                    let mTasa = parseFloat(m[4]) || db.tasa;
+                    let mD = mBs / mTasa;
+                    if(["Fiado", "Abono_Pagado", "Venta"].includes(m[1])) saldoDolar += mD;
+                    else saldoDolar -= mD;
+                    
+                    // Guardamos una referencia del primer movimiento para el "Visual"
+                    if(!infoOriginal && m[1] !== "Abono_Cobrado" && m[1] !== "Abono_Pagado") {
+                        infoOriginal = `Deuda Orig: ${mBs.toFixed(2)} Bs (Tasa: ${mTasa})`;
+                    }
+                }
+            });
+
+            let absDolar = Math.abs(saldoDolar);
+            if(absDolar > 0.01 && !["ENTRADA", "GASTO"].includes(nombre.toUpperCase())) {
+                let montoHoy = absDolar * db.tasa;
                 let esYoDebo = e[1] === "Proveedor";
+                
                 pendHtml += `
-                <div class="list-item" style="border-left-color:${esYoDebo?'var(--rose)':'var(--amber)'}" onclick="opcionesPersona('${e[0]}', ${sal}, '${e[1]}')">
-                    <div><b>${e[0]}</b><br><small style="color:${esYoDebo?'var(--rose)':'var(--amber)'}">${esYoDebo?'YO DEBO':'ME DEBEN'}</small></div>
-                    <div style="text-align:right"><b>${sal.toFixed(2)} Bs</b></div>
+                <div class="list-item" style="border-left-color:${esYoDebo?'var(--rose)':'var(--amber)'}" 
+                     onclick="opcionesPersona('${nombre}', ${absDolar}, ${montoHoy}, '${infoOriginal}', '${e[1]}')">
+                    <div><b>${nombre}</b><br><small style="color:var(--gray)">${infoOriginal}</small></div>
+                    <div style="text-align:right">
+                        <b style="color:${esYoDebo?'var(--rose)':'var(--amber)'}">${montoHoy.toFixed(2)} Bs</b><br>
+                        <small style="color:var(--cyan)">Valor: $${absDolar.toFixed(2)}</small>
+                    </div>
                 </div>`;
             }
         });
 
         document.getElementById('bs-total').innerText = saldoBancario.toFixed(2) + " Bs";
         document.getElementById('usd-total').innerText = "≈ " + (saldoBancario / db.tasa).toFixed(2) + " $";
-        document.getElementById('lista-pendientes-inicio').innerHTML = pendHtml || "<p style='padding:20px; color:var(--gray)'>No hay deudas pendientes.</p>";
+        document.getElementById('lista-pendientes-inicio').innerHTML = pendHtml || "<p style='padding:20px; color:var(--gray)'>Todo al día.</p>";
         document.getElementById('lista-historial').innerHTML = histHtml;
     }
 
-    function verAuditoria(tipoFiltro) {
-        let reporte = `REPORTE DE TIEMPO (${tipoFiltro === 'Cliente' ? 'DEUDORES' : 'MIS DEUDAS'}):\n\n`;
-        let encontrados = false;
+    function opcionesPersona(nom, dolares, bsHoy, infoOrig, tipoEnt) {
+        let esProv = tipoEnt === "Proveedor";
+        let mensajeVisual = `--- REPORTE DE VALOR ---\n` +
+                            `Persona: ${nom}\n` +
+                            `${infoOrig}\n` +
+                            `Valor en $: ${dolares.toFixed(2)}$\n\n` +
+                            `A TASA ACTUAL (${db.tasa}):\n` +
+                            `Monto a liquidar: ${bsHoy.toFixed(2)} Bs\n` +
+                            `------------------------\n` +
+                            `1. Registrar ABONO\n2. PAGAR TODO (${bsHoy.toFixed(2)} Bs)\n3. SUMAR MÁS\nElija (1,2,3):`;
 
-        // Buscamos en los movimientos los que originaron la deuda (Fiado o Deuda)
-        db.movimientos.slice(1).forEach(m => {
-            let tipoMov = m[1];
-            let persona = m[2];
-            let monto = m[3];
-            let fechaHora = m[0];
-
-            // Si es Cliente y el tipo es Fiado
-            if(tipoFiltro === 'Cliente' && tipoMov === 'Fiado') {
-                reporte += `👤 ${persona}\n📅 ${fechaHora}\n💰 Monto: ${monto} Bs\n------------------\n`;
-                encontrados = true;
-            }
-            // Si es Proveedor y el tipo es Deuda
-            if(tipoFiltro === 'Proveedor' && tipoMov === 'Deuda') {
-                reporte += `📦 ${persona}\n📅 ${fechaHora}\n💰 Monto: ${monto} Bs\n------------------\n`;
-                encontrados = true;
-            }
-        });
-
-        if(!encontrados) reporte += "No hay registros detallados con hora en el historial.";
-        alert(reporte);
-    }
-
-    function opcionesPersona(nom, sal, tipoOriginal) {
-        let absSal = Math.abs(sal).toFixed(2);
-        let textoAccion = (tipoOriginal === "Proveedor") ? "le debes" : "te debe";
-        let promptTexto = `Gestión para: ${nom}\n${nom} ${textoAccion}: ${absSal} Bs\n\n` +
-                          `¿Qué deseas hacer?\n` +
-                          `1 - Registrar ABONO parcial\n` +
-                          `2 - CANCELAR TOTALIDAD de la deuda (${absSal} Bs)\n` +
-                          `3 - SUMAR otra deuda a esta cuenta\n\n` +
-                          `Escribe el número (1, 2 o 3):`;
-
-        let opc = prompt(promptTexto, "1");
-
+        let opc = prompt(mensajeVisual, "2");
         if(opc === "1") {
-            let m = prompt(`Monto que se ABONA a la cuenta de ${nom}:`);
-            if(m) registrarNuevo(tipoOriginal === "Proveedor" ? "Abono_Pagado" : "Abono_Cobrado", nom, m);
+            let m = prompt("Monto que entrega en Bs:");
+            if(m) registrarNuevo(esProv ? "Abono_Pagado" : "Abono_Cobrado", nom, m);
         } else if(opc === "2") {
-            if(confirm(`¿Confirmas que se salda la deuda completa de ${absSal} Bs?`)) {
-                registrarNuevo(tipoOriginal === "Proveedor" ? "Abono_Pagado" : "Abono_Cobrado", nom, absSal);
-            }
+            registrarNuevo(esProv ? "Abono_Pagado" : "Abono_Cobrado", nom, bsHoy.toFixed(2));
         } else if(opc === "3") {
-            let m = prompt(`Monto NUEVO que se suma a la deuda de ${nom}:`);
-            if(m) registrarNuevo(tipoOriginal === "Proveedor" ? "Deuda" : "Fiado", nom, m);
+            let m = prompt("Monto nuevo a sumar (Bs):");
+            if(m) registrarNuevo(esProv ? "Deuda" : "Fiado", nom, m);
         }
     }
 
-    async function registrarNuevo(tipo, nomInput = null, mntInput = null) {
-        let persona = nomInput || ((tipo === "Venta") ? "ENTRADA" : (tipo === "Gasto" ? "GASTO" : prompt("Nombre de la persona:")));
+    async function registrarNuevo(tipo, nom, mnt) {
+        let persona = nom || prompt("Nombre:");
         if(!persona) return;
-        let monto = mntInput || prompt("Monto en Bs:");
+        let monto = mnt || prompt("Monto Bs:");
         if(!monto) return;
 
-        let confirmarTasaOp = confirm(`Monto: ${monto} Bs\nTasa: ${db.tasa}\nEquivale a: ${(parseFloat(monto)/db.tasa).toFixed(2)} $\n\n¿Confirmar operación con esta tasa?`);
-        if(!confirmarTasaOp) {
-            let nuevaTasa = prompt("Ingresa la tasa correcta:", db.tasa);
-            if(nuevaTasa) db.tasa = parseFloat(nuevaTasa);
-            else return; 
-        }
-
-        let metodo = prompt("Método de pago:", "Pago Móvil");
-        let detalle = prompt("Descripción:", "");
-
         document.body.style.opacity="0.5";
-        document.body.style.pointerEvents="none";
-
         try {
             await fetch(SCRIPT_URL, {
-                method:'POST', 
-                mode:'no-cors', 
-                body: JSON.stringify({
-                    accion:"REGISTRAR", tipo, persona, monto:parseFloat(monto), tasa:db.tasa, descripcion: metodo, detalle: detalle
-                })
+                method:'POST', mode:'no-cors', 
+                body: JSON.stringify({ accion:"REGISTRAR", tipo, persona, monto:parseFloat(monto), tasa:db.tasa, descripcion: "App Touch", detalle: "" })
             });
             location.reload();
-        } catch(e) {
-            alert("Error al guardar.");
-            document.body.style.opacity="1";
-            document.body.style.pointerEvents="auto";
-        }
+        } catch(e) { alert("Error"); document.body.style.opacity="1"; }
     }
 
     function nav(id, btn) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(btn) btn.classList.add('active');
+        btn.classList.add('active');
     }
 
     window.onload = init;
