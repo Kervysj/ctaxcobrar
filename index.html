@@ -27,7 +27,6 @@
             font-size: 0.75rem; color: var(--cyan); margin-bottom: 10px; border: 1px solid #334155;
         }
         .main-balance { font-family: 'Roboto Mono', monospace; font-size: 2.2rem; font-weight: 800; margin: 0; color: #fff; }
-        .sub-balance { font-family: 'Roboto Mono', monospace; color: var(--cyan); font-size: 1.1rem; margin-bottom: 5px; }
         
         .info-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .info-box { background: #1e293b; padding: 10px; border-radius: 10px; font-size: 0.65rem; text-align: center; }
@@ -39,7 +38,7 @@
             border: 1px solid #2d3748; text-align: center; cursor: pointer; 
             font-size: 0.85rem; font-weight: 700; color: #e2e8f0;
         }
-        .btn-touch:active { transform: scale(0.98); background: #1e293b; }
+        .btn-touch:active { transform: scale(0.95); background: #1e293b; }
 
         .section-title { 
             font-size: 0.75rem; font-weight: 800; color: var(--gray); 
@@ -69,9 +68,8 @@
 <body>
 
 <div class="header">
-    <div class="tasa-container">TASA HOY: <span id="tasa-val" style="color:#fff">0.00</span></div>
+    <div class="tasa-container">TASA: <span id="tasa-val" style="color:#fff">0.00</span></div>
     <div id="bs-total" class="main-balance">0.00 Bs</div>
-    <div id="usd-total" class="sub-balance">≈ 0.00 $</div>
     
     <div class="info-bar">
         <div class="info-box" style="border-bottom: 3px solid var(--amber)">
@@ -92,7 +90,7 @@
         <div class="btn-touch" style="border-top: 3px solid var(--rose)" onclick="registrarNuevo('Deuda')">📦 DEUDA</div>
         <div class="btn-touch" style="border-top: 3px solid var(--amber)" onclick="registrarNuevo('Fiado')">👤 FIADO</div>
     </div>
-    <div class="section-title">Cuentas Pendientes (Solo Fiados/Deudas)</div>
+    <div class="section-title">Cuentas por Cobrar / Pagar</div>
     <div id="lista-pendientes-inicio"></div>
 </div>
 
@@ -107,7 +105,8 @@
 </nav>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx79T15qYpqB09Vf22uGiABkH3CLeKaBIi7yiYY2s60Kufk-Wqu4eB6WY2sLzNEAql_/exec";
+    // URL ACTUALIZADA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGfMQofyp_IR_snqo7q8goWHMQGLIvceBcFuKfV0oJ3_5flieg91VbnjDyT6SydS84/exec";
     let db = {};
 
     async function init() {
@@ -124,13 +123,12 @@
         let tYoDebo = 0, tMeDeben = 0;
         let pendHtml = "", histHtml = "";
 
-        // PROCESAR MOVIMIENTOS
+        // PROCESAR MOVIMIENTOS PARA HISTORIAL
         db.movimientos.slice(1).reverse().forEach(m => {
-            let fecha = m[0].includes('T') ? m[0].split('T')[0] : m[0];
+            let fecha = m[0].split('T')[0];
             let tipo = m[1];
             let persona = m[2];
             let montoBs = parseFloat(m[3]) || 0;
-            let tasaM = parseFloat(m[4]) || db.tasa;
             let desc = m[5] || "Sin descripción";
 
             if(["Venta", "Abono_Cobrado"].includes(tipo)) saldoBancario += montoBs;
@@ -140,7 +138,7 @@
             if(tipo === "Fiado") color = 'var(--amber)';
 
             histHtml += `
-            <div class="list-item" style="border-right: 4px solid ${color}" onclick="alert('FECHA: ${fecha}\\nDESC: ${desc}')">
+            <div class="list-item" style="border-right: 4px solid ${color}" onclick="alert('DETALLE:\\n${desc}')">
                 <div style="flex:1;">
                     <b>${persona}</b><br><small>${fecha} | ${tipo}</small>
                 </div>
@@ -150,84 +148,78 @@
             </div>`;
         });
 
-        // PROCESAR PENDIENTES (SOLO SI SON FIADO O DEUDA)
+        // PROCESAR PENDIENTES (SOLO FIADO Y DEUDA)
         db.entidades.slice(1).forEach(e => {
             let nombre = e[0];
             let saldoDolar = 0;
-            let historialPersona = "";
+            let detalleAcumulado = "";
 
             db.movimientos.slice(1).forEach(m => {
                 if(m[2] === nombre) {
                     let mD = parseFloat(m[3]) / (parseFloat(m[4]) || db.tasa);
                     if(["Fiado", "Abono_Pagado", "Venta"].includes(m[1])) saldoDolar += mD;
                     else saldoDolar -= mD;
-                    historialPersona += `${m[0].split('T')[0]}: ${m[5] || 'Sin desc'}\\n`;
+                    if(m[5]) detalleAcumulado += `- ${m[5]}\\n`;
                 }
             });
 
             let absDolar = Math.abs(saldoDolar);
-            // FILTRO ESTRICTO: Solo mostrar si el tipo en Entidades es Cliente o Proveedor y tiene deuda
             if(absDolar > 0.01 && !["ENTRADA", "GASTO"].includes(nombre.toUpperCase())) {
                 let montoHoy = absDolar * db.tasa;
                 let esYoDebo = e[1] === "Proveedor";
-                
                 if(esYoDebo) tYoDebo += montoHoy; else tMeDeben += montoHoy;
 
                 pendHtml += `
-                <div class="list-item" onclick="opcionesPersona('${nombre}', ${absDolar}, ${montoHoy}, '${historialPersona}', '${e[1]}')">
+                <div class="list-item" onclick="opcionesPersona('${nombre}', ${absDolar}, ${montoHoy}, '${detalleAcumulado}', '${e[1]}')">
                     <div><b>${nombre}</b><br><small>${esYoDebo?'Debo':'Me deben'}</small></div>
                     <div class="amount-text" style="color:${esYoDebo?'var(--rose)':'var(--amber)'}">
-                        ${montoHoy.toFixed(2)} Bs
+                        ${montoHoy.toFixed(2)} Bs<br>
+                        <small style="color:var(--cyan)">$${absDolar.toFixed(2)}</small>
                     </div>
                 </div>`;
             }
         });
 
         document.getElementById('bs-total').innerText = saldoBancario.toFixed(2) + " Bs";
-        document.getElementById('usd-total').innerText = "≈ " + (saldoBancario / db.tasa).toFixed(2) + " $";
         document.getElementById('info-me-deben').innerText = tMeDeben.toFixed(2) + " Bs";
         document.getElementById('info-yo-debo').innerText = tYoDebo.toFixed(2) + " Bs";
-        document.getElementById('lista-pendientes-inicio').innerHTML = pendHtml || "<p style='padding:20px; color:var(--gray)'>Sin pendientes</p>";
+        document.getElementById('lista-pendientes-inicio').innerHTML = pendHtml || "<p style='padding:20px; color:var(--gray)'>Sin cuentas pendientes</p>";
         document.getElementById('lista-historial').innerHTML = histHtml;
     }
 
     async function registrarNuevo(tipo, nom, mnt) {
         let persona = nom || prompt("Nombre:"); if(!persona) return;
         let monto = mnt || prompt("Monto Bs:"); if(!monto) return;
-        let descripcion = prompt("Descripción:");
+        let descripcion = prompt("Descripción / Leyenda:");
         
         document.body.style.opacity="0.4";
         try {
-            // El objeto debe tener exactamente estas llaves para que el Script las lea
-            const datos = {
-                accion: "REGISTRAR",
-                tipo: tipo,
-                persona: persona.toUpperCase(),
-                monto: parseFloat(monto),
-                tasa: db.tasa,
-                descripcion: descripcion || "App Touch"
-            };
-
             await fetch(SCRIPT_URL, {
                 method:'POST',
                 mode:'no-cors',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(datos)
+                body: JSON.stringify({
+                    accion: "REGISTRAR",
+                    tipo: tipo,
+                    persona: persona.toUpperCase(),
+                    monto: parseFloat(monto),
+                    tasa: db.tasa,
+                    descripcion: descripcion || "Registro App"
+                })
             });
-            
-            setTimeout(() => { location.reload(); }, 500);
-        } catch(e) { alert("Error al guardar"); document.body.style.opacity="1"; }
+            setTimeout(() => { location.reload(); }, 600);
+        } catch(e) { alert("Error"); document.body.style.opacity="1"; }
     }
 
-    function opcionesPersona(nom, dol, bs, hist, tipo) {
-        let opc = prompt(`${nom}\\n${hist}\\n1. Abono\\n2. Liquidar\\n3. Sumar`, "1");
+    function opcionesPersona(nom, dol, bs, det, tipo) {
+        let msj = `${nom}\\n\\nLEYENDA ACUMULADA:\\n${det || 'Sin detalles'}\\n\\n1. Abono\\n2. Liquidar todo\\n3. Sumar deuda`;
+        let opc = prompt(msj, "1");
         if(opc === "1") {
             let m = prompt("Monto Abono Bs:");
             if(m) registrarNuevo(tipo === "Proveedor" ? "Abono_Pagado" : "Abono_Cobrado", nom, m);
         } else if(opc === "2") {
-            registrarNuevo(tipo === "Proveedor" ? "Abono_Pagado" : "Abono_Cobrado", nom, bs);
+            registrarNuevo(tipo === "Proveedor" ? "Abono_Pagado" : "Abono_Cobrado", nom, bs.toFixed(2));
         } else if(opc === "3") {
-            let m = prompt("Monto nuevo Bs:");
+            let m = prompt("Monto a sumar Bs:");
             if(m) registrarNuevo(tipo === "Proveedor" ? "Deuda" : "Fiado", nom, m);
         }
     }
