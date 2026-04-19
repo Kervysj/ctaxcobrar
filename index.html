@@ -253,7 +253,21 @@
 
         if(lote.porciones.length === 0) {
             const totalRecaudado = lote.cantTotal * p.precio;
-            alert(`🎉 LOTE TERMINADO: ${lote.nombre}\nGanancia Neta: $${(totalRecaudado - lote.costoLote).toFixed(2)}`);
+            const inversionLote = lote.costoLote;
+            const gananciaNeta = totalRecaudado - inversionLote;
+            
+            alert(`🎉 ¡LOTE TERMINADO!
+----------------------------------
+📦 Producto: ${lote.nombre}
+💵 Costo por porción: $${p.costoIndiv}
+✅ Porciones vendidas: (${lote.cantTotal})
+----------------------------------
+💰 TOTAL RECAUDADO: $${totalRecaudado.toFixed(2)}
+📉 COSTO DE PRODUCCIÓN: $${inversionLote.toFixed(2)}
+✨ GANANCIA NETA: $${gananciaNeta.toFixed(2)}
+----------------------------------
+¡Excelente trabajo!`);
+
             lotes = lotes.filter(l => l.id !== loteId);
         }
 
