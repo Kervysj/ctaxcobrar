@@ -122,6 +122,30 @@
             font-size: 16px;
         }
 
+        /* Estilo para el aviso de guardado */
+        #toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: var(--success);
+            color: #000;
+            text-align: center;
+            border-radius: 50px;
+            padding: 10px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,255,136,0.3);
+        }
+
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 1.5s; }
+
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 80px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 80px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
         .nav-bar {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -138,6 +162,8 @@
     </style>
 </head>
 <body>
+
+<div id="toast">💾 GUARDADO EXITOSO</div>
 
 <div class="container">
     <h2 id="app-title">PRODUCCIÓN</h2>
@@ -195,6 +221,18 @@
     let lotes = JSON.parse(localStorage.getItem('lotes_v5')) || [];
     let historial = JSON.parse(localStorage.getItem('historial_v5')) || [];
 
+    function showToast() {
+        const x = document.getElementById("toast");
+        x.className = "show";
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, 2000);
+    }
+
+    function save() {
+        localStorage.setItem('lotes_v5', JSON.stringify(lotes));
+        localStorage.setItem('historial_v5', JSON.stringify(historial));
+        showToast(); // Avisa que se guardó en la caché del teléfono
+    }
+
     function crearLote() {
         const nombreInput = document.getElementById('prod-nombre');
         const cantInput = document.getElementById('prod-cant');
@@ -219,14 +257,24 @@
             porciones: Array(cant).fill().map((_, i) => ({
                 id_p: i,
                 precio: precio,
-                costoIndiv: costoTotal > 0 ? (costoTotal / cant).toFixed(2) : 0
+                costoIndiv: costoTotal > 0 ? (costoTotal / cant).toFixed(2) : 0,
+                cliente: "",
+                fechaCobro: "" // Nueva observación: Fecha de cobro prometida
             }))
         };
 
         lotes.push(nuevoLote);
         save(); render();
         nombreInput.value = ""; cantInput.value = ""; precioInput.value = ""; costoInput.value = "";
-        alert("✅ Registrado.");
+    }
+
+    // Función para guardar cambios en los inputs sin cobrar (como nombre o fecha prometida)
+    function autoSave(loteId, idx, campo, valor) {
+        const lote = lotes.find(l => l.id === loteId);
+        if(lote) {
+            lote.porciones[idx][campo] = valor;
+            save();
+        }
     }
 
     function cobrar(loteId, porcionIdx) {
@@ -252,20 +300,8 @@
         lote.porciones.splice(porcionIdx, 1);
 
         if(lote.porciones.length === 0) {
-            const totalRecaudado = lote.cantTotal * p.precio;
-            const inversionLote = lote.costoLote;
-            
-            let mensaje = `🎉 ¡LOTE TERMINADO!\n----------------------------------\n📦 Producto: ${lote.nombre}\n✅ Vendidas: (${lote.cantTotal})\n💰 TOTAL RECAUDADO: $${totalRecaudado.toFixed(2)}`;
-            
-            if(inversionLote > 0) {
-                const gananciaNeta = totalRecaudado - inversionLote;
-                mensaje += `\n💵 Costo por porción: $${p.costoIndiv}\n📉 COSTO PRODUCCIÓN: $${inversionLote.toFixed(2)}\n✨ GANANCIA NETA: $${gananciaNeta.toFixed(2)}`;
-            }
-            
-            mensaje += `\n----------------------------------\n¡Excelente trabajo!`;
-            alert(mensaje);
-
             lotes = lotes.filter(l => l.id !== loteId);
+            alert("🎉 Lote terminado y guardado.");
         }
 
         save(); render();
@@ -276,20 +312,6 @@
             lotes = lotes.filter(l => l.id !== id);
             save(); render();
         }
-    }
-
-    function editarLote(id) {
-        const lote = lotes.find(l => l.id === id);
-        const nuevoNombre = prompt("Nuevo nombre:", lote.nombre);
-        if(nuevoNombre) {
-            lote.nombre = nuevoNombre.toUpperCase();
-            save(); render();
-        }
-    }
-
-    function save() {
-        localStorage.setItem('lotes_v5', JSON.stringify(lotes));
-        localStorage.setItem('historial_v5', JSON.stringify(historial));
     }
 
     function render() {
@@ -309,23 +331,24 @@
                 
                 <div id="lote-det-${idxLote}" class="hidden" style="margin-top:15px; border-top: 1px solid #333; padding-top:10px">
                     <div style="text-align:right">
-                        <button class="btn-mini" style="background:#444; color:white" onclick="editarLote(${l.id})">EDITAR</button>
-                        <button class="btn-mini" style="background:var(--danger); color:white" onclick="eliminarLote(${l.id})">BORRAR</button>
+                        <button class="btn-mini" style="background:var(--danger); color:white" onclick="eliminarLote(${l.id})">BORRAR LOTE</button>
                     </div>`;
             
             l.porciones.forEach((p, idx) => {
                 html += `<div class="portion-item">
                     <label>Vendido a:</label>
-                    <input type="text" id="cli-${l.id}-${idx}" placeholder="Nombre del cliente">
+                    <input type="text" id="cli-${l.id}-${idx}" value="${p.cliente || ''}" placeholder="Nombre del cliente" onchange="autoSave(${l.id}, ${idx}, 'cliente', this.value)">
                     
                     <div class="resumen-dinero">
-                        ${l.costoLote > 0 ? `<span>Costo: <b style="color:var(--danger)">$${p.costoIndiv}</b></span>` : ''}
                         <span>Venta: <b style="color:var(--success)">$${p.precio}</b></span>
                         ${l.costoLote > 0 ? `<span>Ganancia: <b style="color:var(--accent)">$${(p.precio - p.costoIndiv).toFixed(2)}</b></span>` : ''}
                     </div>
 
                     <div style="display:flex; gap:10px; align-items:flex-end">
-                        <div style="flex:1"><label>Entrega</label><input type="date" value="${new Date().toISOString().split('T')[0]}" style="margin:0"></div>
+                        <div style="flex:1">
+                            <label style="color:var(--warning)">Fecha de Cobro (Promesa)</label>
+                            <input type="date" id="date-${l.id}-${idx}" value="${p.fechaCobro || ''}" onchange="autoSave(${l.id}, ${idx}, 'fechaCobro', this.value)" style="margin:0">
+                        </div>
                         <button class="btn-check" onclick="cobrar(${l.id}, ${idx})">OK</button>
                     </div>
                 </div>`;
@@ -352,7 +375,7 @@
         el.classList.add('active');
         document.getElementById('app-title').innerText = view === 'nueva' ? 'PRODUCCIÓN' : (view === 'pendientes' ? 'COBROS' : 'HISTORIAL');
     }
-    function borrarHistorial() { if(confirm("¿Vaciar historial para liberar memoria?")) { historial = []; save(); render(); } }
+    function borrarHistorial() { if(confirm("¿Vaciar historial?")) { historial = []; save(); render(); } }
     render();
 </script>
 </body>
