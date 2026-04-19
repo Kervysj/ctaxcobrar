@@ -18,6 +18,7 @@
             --text: #e0e0e0;
             --danger: #ff4d4d;
             --success: #00ff88;
+            --warning: #ffcc00;
             --border: #333;
         }
 
@@ -48,7 +49,7 @@
         }
 
         .status-badge {
-            font-size: 11px;
+            font-size: 10px;
             padding: 6px 10px;
             border-radius: 12px;
             background: rgba(0, 209, 255, 0.1);
@@ -91,7 +92,17 @@
             padding: 15px;
             border-radius: 12px;
             border-left: 4px solid var(--accent);
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .resumen-dinero {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
         }
 
         .btn-check {
@@ -132,10 +143,10 @@
     
     <div id="view-nueva" class="view">
         <div class="card">
-            <h3 style="margin:0 0 20px 0; font-weight: 300; text-align: center; color: var(--text);">Nueva Producción</h3>
+            <h3 style="margin:0 0 20px 0; font-weight: 300; text-align: center;">Nueva Producción</h3>
             
             <label>Nombre del Producto</label>
-            <input type="text" id="prod-nombre" placeholder="Ej: PIE DE PARCHITA">
+            <input type="text" id="prod-nombre" placeholder="Ej: QUESO">
             
             <div style="display:flex; gap:10px">
                 <div style="flex:1">
@@ -168,7 +179,7 @@
     </div>
 
     <div id="view-historial" class="view hidden">
-        <button id="btn-borrar-hist" class="hidden" style="background: var(--danger); margin-bottom:20px;" onclick="borrarHistorial()">BORRAR HISTORIAL DEFINITIVO</button>
+        <button id="btn-borrar-hist" class="hidden" style="background: var(--danger); margin-bottom:20px;" onclick="borrarHistorial()">BORRAR HISTORIAL</button>
         <div id="lista-historial"></div>
     </div>
 </div>
@@ -194,12 +205,12 @@
 
         const nombre = nombreInput.value.toUpperCase().trim();
         const cant = parseInt(cantInput.value);
-        const precio = precioInput.value;
+        const precio = parseFloat(precioInput.value);
         const costoTotal = parseFloat(costoInput.value) || 0;
         const fechaProd = fechaInput.value;
 
-        if(!nombre || isNaN(cant) || !precio || !fechaProd) {
-            alert("⚠️ Por favor, rellena todos los campos correctamente.");
+        if(!nombre || isNaN(cant) || isNaN(precio) || !fechaProd) {
+            alert("⚠️ Revisa los datos.");
             return;
         }
 
@@ -208,68 +219,53 @@
             nombre: nombre,
             fechaProd: fechaProd,
             costoLote: costoTotal,
-            cantTotal: cant, // Cantidad estática inicial
-            vendidas: 0,      // Contador de ventas
+            cantTotal: cant,
+            vendidas: 0,
             porciones: Array(cant).fill().map((_, i) => ({
                 id_p: i,
-                precio: precio
+                precio: precio,
+                costoIndiv: (costoTotal / cant).toFixed(2)
             }))
         };
 
         lotes.push(nuevoLote);
-        save();
-        render();
-        
-        nombreInput.value = "";
-        cantInput.value = "";
-        precioInput.value = "";
-        costoInput.value = "";
-        
-        alert("✅ Lote registrado correctamente.");
+        save(); render();
+        nombreInput.value = ""; cantInput.value = ""; precioInput.value = ""; costoInput.value = "";
+        alert("✅ Registrado.");
     }
 
     function cobrar(loteId, porcionIdx) {
         const clienteVal = document.getElementById(`cli-${loteId}-${porcionIdx}`).value.trim();
         const fechaEntVal = document.getElementById(`fent-${loteId}-${porcionIdx}`).value;
         
-        if(!clienteVal) {
-            alert("Escribe el nombre del cliente que lleva la porción.");
-            return;
-        }
+        if(!clienteVal) return alert("Falta nombre del cliente.");
 
-        const ref = prompt(`Referencia de pago para ${clienteVal}:`);
+        const ref = prompt(`Referencia de pago:`);
         if(ref === null) return;
 
         const lote = lotes.find(l => l.id === loteId);
         const p = lote.porciones[porcionIdx];
-
-        // Incrementar contador de vendidas
         lote.vendidas++;
 
         historial.unshift({
             producto: lote.nombre,
             cliente: clienteVal,
             precio: p.precio,
-            fechaProd: lote.fechaProd,
-            fechaEnt: fechaEntVal,
-            fechaPago: new Date().toLocaleDateString(),
-            ref: ref || "S/R"
+            ganancia: (p.precio - p.costoIndiv).toFixed(2),
+            ref: ref || "S/R",
+            fechaPago: new Date().toLocaleDateString()
         });
 
         lote.porciones.splice(porcionIdx, 1);
 
-        // Lógica de finalización y felicitación
         if(lote.porciones.length === 0) {
             const totalRecaudado = lote.cantTotal * p.precio;
             const gananciaNeta = totalRecaudado - lote.costoLote;
-            
-            alert(`🎉 ¡FELICITACIONES! 🎉\n\nHas vendido todas las porciones de ${lote.nombre}.\n\n💰 Recaudado: $${totalRecaudado.toFixed(2)}\n📉 Inversión: $${lote.costoLote.toFixed(2)}\n✨ GANANCIA NETA: $${gananciaNeta.toFixed(2)}`);
-            
+            alert(`🎉 ¡LOTE TERMINADO!\n\n${lote.nombre}\n💰 Recaudado: $${totalRecaudado.toFixed(2)}\n📉 Inversión: $${lote.costoLote.toFixed(2)}\n✨ GANANCIA: $${gananciaNeta.toFixed(2)}`);
             lotes = lotes.filter(l => l.id !== loteId);
         }
 
-        save();
-        render();
+        save(); render();
     }
 
     function save() {
@@ -280,33 +276,32 @@
     function render() {
         const listaP = document.getElementById('lista-pendientes');
         const listaH = document.getElementById('lista-historial');
-        
-        listaP.innerHTML = lotes.length === 0 ? "<div style='text-align:center; padding:50px; color:#555'>No hay cobros pendientes</div>" : "";
+        listaP.innerHTML = lotes.length === 0 ? "<div style='text-align:center; padding:50px; color:#555'>No hay pendientes</div>" : "";
         
         lotes.forEach((l, idxLote) => {
             let html = `<div class="card">
                 <div class="acordeon-header" onclick="toggleLote(${idxLote})">
                     <div>
                         <strong style="color:var(--accent); font-size:16px">${l.nombre}</strong><br>
-                        <small style="color:#666">Hecho el: ${l.fechaProd}</small>
+                        <small style="color:#666">Costo Lote: $${l.costoLote}</small>
                     </div>
-                    <div class="status-badge">
-                        Total: ${l.cantTotal}<br>
-                        Vendidas: ${l.vendidas}
-                    </div>
+                    <div class="status-badge">RECIBIDAS: ${l.cantTotal}<br>VENDIDAS: ${l.vendidas}</div>
                 </div>
-                
                 <div id="lote-det-${idxLote}" class="hidden" style="margin-top:20px; border-top: 1px solid #333; padding-top:10px">`;
             
             l.porciones.forEach((p, idx) => {
                 html += `<div class="portion-item">
-                    <label>Nombre del Cliente</label>
-                    <input type="text" id="cli-${l.id}-${idx}" placeholder="¿Quién lo debe?" style="margin-bottom:10px">
+                    <label>Cliente</label>
+                    <input type="text" id="cli-${l.id}-${idx}" placeholder="¿Quién lleva?">
+                    
+                    <div class="resumen-dinero">
+                        <span>Pagar Prov: <b style="color:var(--danger)">$${p.costoIndiv}</b></span>
+                        <span>Cobrar: <b style="color:var(--success)">$${p.precio}</b></span>
+                        <span>Ganancia: <b style="color:var(--accent)">$${(p.precio - p.costoIndiv).toFixed(2)}</b></span>
+                    </div>
+
                     <div style="display:flex; gap:10px; align-items:flex-end">
-                        <div style="flex:1">
-                            <label>Fecha de Entrega</label>
-                            <input type="date" id="fent-${l.id}-${idx}" value="${new Date().toISOString().split('T')[0]}" style="margin:0">
-                        </div>
+                        <div style="flex:1"><label>Entrega</label><input type="date" id="fent-${l.id}-${idx}" value="${new Date().toISOString().split('T')[0]}" style="margin:0"></div>
                         <button class="btn-check" onclick="cobrar(${l.id}, ${idx})">OK</button>
                     </div>
                 </div>`;
@@ -317,31 +312,17 @@
 
         listaH.innerHTML = "";
         historial.forEach((h, i) => {
-            listaH.innerHTML += `<div class="card" onclick="toggleHist(${i})">
+            listaH.innerHTML += `<div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center">
                     <span><b>${h.producto}</b><br><small>${h.cliente}</small></span>
-                    <span style="color:var(--success); font-weight:bold">$${h.precio} ▾</span>
-                </div>
-                <div id="hist-det-${i}" class="hidden hist-content">
-                    <strong>Ref:</strong> <span style="color:var(--accent)">${h.ref}</span><br>
-                    <strong>Preparación:</strong> ${h.fechaProd}<br>
-                    <strong>Entregado:</strong> ${h.fechaEnt}<br>
-                    <strong>Cobrado:</strong> ${h.fechaPago}
+                    <span style="color:var(--success); font-weight:bold">+$${h.ganancia}</span>
                 </div>
             </div>`;
         });
-
-        document.getElementById('btn-borrar-hist').classList.toggle('hidden', historial.length < 45);
+        document.getElementById('btn-borrar-hist').classList.toggle('hidden', historial.length < 10);
     }
 
-    function toggleLote(idx) {
-        document.getElementById(`lote-det-${idx}`).classList.toggle('hidden');
-    }
-
-    function toggleHist(i) {
-        document.getElementById(`hist-det-${i}`).classList.toggle('hidden');
-    }
-
+    function toggleLote(idx) { document.getElementById(`lote-det-${idx}`).classList.toggle('hidden'); }
     function changeView(view, el) {
         document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
         document.getElementById('view-' + view).classList.remove('hidden');
@@ -349,15 +330,7 @@
         el.classList.add('active');
         document.getElementById('app-title').innerText = view === 'nueva' ? 'PRODUCCIÓN' : (view === 'pendientes' ? 'COBROS' : 'HISTORIAL');
     }
-
-    function borrarHistorial() {
-        if(confirm("¿Estás seguro de que quieres vaciar el historial?")) { 
-            historial = []; 
-            save(); 
-            render(); 
-        }
-    }
-
+    function borrarHistorial() { if(confirm("¿Vaciar?")) { historial = []; save(); render(); } }
     render();
 </script>
 </body>
