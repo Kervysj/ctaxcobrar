@@ -95,14 +95,23 @@
         }
 
         .resumen-dinero {
-            background: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.5);
             border: 1px solid #333;
             border-radius: 8px;
-            padding: 8px;
-            margin: 10px 0;
+            padding: 10px;
+            margin: 12px 0;
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
+            font-size: 13px;
+        }
+
+        .btn-mini {
+            width: auto;
+            padding: 8px 15px;
+            font-size: 11px;
+            margin-top: 10px;
+            margin-left: 5px;
+            display: inline-block;
         }
 
         .btn-check {
@@ -126,14 +135,6 @@
         .nav-item { flex: 1; text-align: center; font-size: 11px; color: #666; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
         .hidden { display: none; }
-
-        .hist-content {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px dashed #444;
-            font-size: 14px;
-            line-height: 1.6;
-        }
     </style>
 </head>
 <body>
@@ -144,7 +145,6 @@
     <div id="view-nueva" class="view">
         <div class="card">
             <h3 style="margin:0 0 20px 0; font-weight: 300; text-align: center;">Nueva Producción</h3>
-            
             <label>Nombre del Producto</label>
             <input type="text" id="prod-nombre" placeholder="Ej: QUESO">
             
@@ -169,7 +169,6 @@
                     <input type="date" id="prod-fecha-manual">
                 </div>
             </div>
-            
             <button onclick="crearLote()">REGISTRAR LOTE</button>
         </div>
     </div>
@@ -207,17 +206,13 @@
         const cant = parseInt(cantInput.value);
         const precio = parseFloat(precioInput.value);
         const costoTotal = parseFloat(costoInput.value) || 0;
-        const fechaProd = fechaInput.value;
 
-        if(!nombre || isNaN(cant) || isNaN(precio) || !fechaProd) {
-            alert("⚠️ Revisa los datos.");
-            return;
-        }
+        if(!nombre || isNaN(cant) || isNaN(precio)) return alert("⚠️ Revisa los datos.");
 
         const nuevoLote = {
             id: Date.now(),
             nombre: nombre,
-            fechaProd: fechaProd,
+            fechaProd: fechaInput.value,
             costoLote: costoTotal,
             cantTotal: cant,
             vendidas: 0,
@@ -236,8 +231,6 @@
 
     function cobrar(loteId, porcionIdx) {
         const clienteVal = document.getElementById(`cli-${loteId}-${porcionIdx}`).value.trim();
-        const fechaEntVal = document.getElementById(`fent-${loteId}-${porcionIdx}`).value;
-        
         if(!clienteVal) return alert("Falta nombre del cliente.");
 
         const ref = prompt(`Referencia de pago:`);
@@ -260,12 +253,27 @@
 
         if(lote.porciones.length === 0) {
             const totalRecaudado = lote.cantTotal * p.precio;
-            const gananciaNeta = totalRecaudado - lote.costoLote;
-            alert(`🎉 ¡LOTE TERMINADO!\n\n${lote.nombre}\n💰 Recaudado: $${totalRecaudado.toFixed(2)}\n📉 Inversión: $${lote.costoLote.toFixed(2)}\n✨ GANANCIA: $${gananciaNeta.toFixed(2)}`);
+            alert(`🎉 LOTE TERMINADO: ${lote.nombre}\nGanancia Neta: $${(totalRecaudado - lote.costoLote).toFixed(2)}`);
             lotes = lotes.filter(l => l.id !== loteId);
         }
 
         save(); render();
+    }
+
+    function eliminarLote(id) {
+        if(confirm("¿Eliminar todo este lote?")) {
+            lotes = lotes.filter(l => l.id !== id);
+            save(); render();
+        }
+    }
+
+    function editarLote(id) {
+        const lote = lotes.find(l => l.id === id);
+        const nuevoNombre = prompt("Nuevo nombre:", lote.nombre);
+        if(nuevoNombre) {
+            lote.nombre = nuevoNombre.toUpperCase();
+            save(); render();
+        }
     }
 
     function save() {
@@ -276,7 +284,7 @@
     function render() {
         const listaP = document.getElementById('lista-pendientes');
         const listaH = document.getElementById('lista-historial');
-        listaP.innerHTML = lotes.length === 0 ? "<div style='text-align:center; padding:50px; color:#555'>No hay pendientes</div>" : "";
+        listaP.innerHTML = lotes.length === 0 ? "<div style='text-align:center; padding:50px; color:#555'>No hay cobros pendientes</div>" : "";
         
         lotes.forEach((l, idxLote) => {
             let html = `<div class="card">
@@ -285,23 +293,28 @@
                         <strong style="color:var(--accent); font-size:16px">${l.nombre}</strong><br>
                         <small style="color:#666">Costo Lote: $${l.costoLote}</small>
                     </div>
-                    <div class="status-badge">RECIBIDAS: ${l.cantTotal}<br>VENDIDAS: ${l.vendidas}</div>
+                    <div class="status-badge">RESTAN: ${l.porciones.length}<br>VENDIDAS: ${l.vendidas}</div>
                 </div>
-                <div id="lote-det-${idxLote}" class="hidden" style="margin-top:20px; border-top: 1px solid #333; padding-top:10px">`;
+                
+                <div id="lote-det-${idxLote}" class="hidden" style="margin-top:15px; border-top: 1px solid #333; padding-top:10px">
+                    <div style="text-align:right">
+                        <button class="btn-mini" style="background:#444; color:white" onclick="editarLote(${l.id})">EDITAR</button>
+                        <button class="btn-mini" style="background:var(--danger); color:white" onclick="eliminarLote(${l.id})">BORRAR</button>
+                    </div>`;
             
             l.porciones.forEach((p, idx) => {
                 html += `<div class="portion-item">
-                    <label>Cliente</label>
-                    <input type="text" id="cli-${l.id}-${idx}" placeholder="¿Quién lleva?">
+                    <label>Vendido a:</label>
+                    <input type="text" id="cli-${l.id}-${idx}" placeholder="Nombre del cliente">
                     
                     <div class="resumen-dinero">
-                        <span>Pagar Prov: <b style="color:var(--danger)">$${p.costoIndiv}</b></span>
-                        <span>Cobrar: <b style="color:var(--success)">$${p.precio}</b></span>
+                        <span>Costo: <b style="color:var(--danger)">$${p.costoIndiv}</b></span>
+                        <span>Venta: <b style="color:var(--success)">$${p.precio}</b></span>
                         <span>Ganancia: <b style="color:var(--accent)">$${(p.precio - p.costoIndiv).toFixed(2)}</b></span>
                     </div>
 
                     <div style="display:flex; gap:10px; align-items:flex-end">
-                        <div style="flex:1"><label>Entrega</label><input type="date" id="fent-${l.id}-${idx}" value="${new Date().toISOString().split('T')[0]}" style="margin:0"></div>
+                        <div style="flex:1"><label>Entrega</label><input type="date" value="${new Date().toISOString().split('T')[0]}" style="margin:0"></div>
                         <button class="btn-check" onclick="cobrar(${l.id}, ${idx})">OK</button>
                     </div>
                 </div>`;
@@ -311,15 +324,13 @@
         });
 
         listaH.innerHTML = "";
-        historial.forEach((h, i) => {
-            listaH.innerHTML += `<div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center">
-                    <span><b>${h.producto}</b><br><small>${h.cliente}</small></span>
-                    <span style="color:var(--success); font-weight:bold">+$${h.ganancia}</span>
-                </div>
-            </div>`;
+        historial.forEach(h => {
+            listaH.innerHTML += `<div class="card"><div style="display:flex; justify-content:space-between">
+                <span><b>${h.producto}</b><br><small>${h.cliente}</small></span>
+                <span style="color:var(--success); font-weight:bold">+$${h.ganancia}</span>
+            </div></div>`;
         });
-        document.getElementById('btn-borrar-hist').classList.toggle('hidden', historial.length < 10);
+        document.getElementById('btn-borrar-hist').classList.toggle('hidden', historial.length < 45);
     }
 
     function toggleLote(idx) { document.getElementById(`lote-det-${idx}`).classList.toggle('hidden'); }
@@ -330,7 +341,7 @@
         el.classList.add('active');
         document.getElementById('app-title').innerText = view === 'nueva' ? 'PRODUCCIÓN' : (view === 'pendientes' ? 'COBROS' : 'HISTORIAL');
     }
-    function borrarHistorial() { if(confirm("¿Vaciar?")) { historial = []; save(); render(); } }
+    function borrarHistorial() { if(confirm("¿Vaciar historial para liberar memoria?")) { historial = []; save(); render(); } }
     render();
 </script>
 </body>
